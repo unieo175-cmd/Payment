@@ -18,7 +18,7 @@ const metrics = computed(() => {
 const loadData = async () => {
   isLoading.value = true;
   try {
-    const response = await fetch('/data.csv');
+    const response = await fetch(import.meta.env.BASE_URL + 'data.csv');
     const content = await response.text();
     allRecords.value = parseCSV(content);
     filteredRecords.value = [...allRecords.value];
