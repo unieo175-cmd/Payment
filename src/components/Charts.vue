@@ -9,28 +9,42 @@ const props = defineProps({
 });
 
 // Calculate status distribution
+// 公式：
+// - 成功：到帳金額≠0 且非補單
+// - 未充值：到帳金額=0
+// - 補單：狀態含補單字眼 且 到帳金額≠0
 const statusDistribution = computed(() => {
   const dist = {
     success: 0,
+    successAmount: 0,
     invalid: 0,
     budan: 0,
-    other: 0
+    budanAmount: 0
   };
 
   props.records.forEach(r => {
-    if (r.isSuccess && !r.isBuDan) dist.success++;
-    else if (r.isInvalid) dist.invalid++;
-    else if (r.isBuDan) dist.budan++;
-    else dist.other++;
+    const hasBuDan = r.status && (r.status.includes('補') || r.status.includes('补'));
+
+    if (hasBuDan && r.receivedAmount !== 0) {
+      // 補單：狀態含補單字眼 且 到帳金額≠0
+      dist.budan++;
+      dist.budanAmount += r.receivedAmount;
+    } else if (r.receivedAmount !== 0) {
+      // 成功：到帳金額≠0 且非補單
+      dist.success++;
+      dist.successAmount += r.receivedAmount;
+    } else {
+      // 未充值：到帳金額=0
+      dist.invalid++;
+    }
   });
 
   const total = props.records.length || 1;
 
   return [
-    { label: '成功', value: dist.success, percent: (dist.success / total * 100).toFixed(1), color: '#30d158' },
-    { label: '未充值', value: dist.invalid, percent: (dist.invalid / total * 100).toFixed(1), color: '#ff453a' },
-    { label: '補單', value: dist.budan, percent: (dist.budan / total * 100).toFixed(1), color: '#ff9f0a' },
-    { label: '其他', value: dist.other, percent: (dist.other / total * 100).toFixed(1), color: '#8e8e93' }
+    { label: '成功', value: dist.success, amount: dist.successAmount, percent: (dist.success / total * 100).toFixed(1), color: '#30d158' },
+    { label: '未充值', value: dist.invalid, amount: 0, percent: (dist.invalid / total * 100).toFixed(1), color: '#ff453a' },
+    { label: '補單', value: dist.budan, amount: dist.budanAmount, percent: (dist.budan / total * 100).toFixed(1), color: '#ff9f0a' }
   ].filter(d => d.value > 0);
 });
 
@@ -109,7 +123,10 @@ const maxBankAmount = computed(() => {
         <div v-for="item in statusDistribution" :key="item.label" class="legend-item">
           <span class="legend-dot" :style="{ background: item.color }"></span>
           <span class="legend-label">{{ item.label }}</span>
-          <span class="legend-value">{{ item.value.toLocaleString() }} ({{ item.percent }}%)</span>
+          <span class="legend-value">
+            {{ item.value.toLocaleString() }} ({{ item.percent }}%)
+            <template v-if="item.amount > 0"> / {{ (item.amount / 10000).toFixed(1) }}萬</template>
+          </span>
         </div>
       </div>
     </div>

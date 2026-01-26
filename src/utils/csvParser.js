@@ -162,14 +162,139 @@ export const parseCSV = (content) => {
 };
 
 export const calculateMetrics = (records) => {
-  // 總申請：狀態不包含未充值的筆數
-  const validRecords = records.filter(r => !r.isInvalid);
-  const invalidRecords = records.filter(r => r.isInvalid);
+  // ===== 全部-重要信息 =====
+  // 總申請筆數 = 銀行卡成功配對 + 支付寶成功配對
   const allRecords = records;
 
-  // 總申請金額
-  const totalApplicationAmount = validRecords.reduce((sum, r) => sum + r.amount, 0);
-  const totalApplicationCount = validRecords.length;
+  // 銀行卡成功配對：极速充提3 且非支付寶/微信，有 bankCardCode
+  const bankCardForTotal = records.filter(r => {
+    const hasJiSu = r.merchant.includes('极速充提3');
+    const hasAlipay = r.merchant.includes('支付宝') || r.merchant.includes('支付寶');
+    const hasWechat = r.merchant.includes('微信');
+    return hasJiSu && !hasAlipay && !hasWechat && r.bankCardCode;
+  });
+
+  // 支付寶成功配對：包含支付宝/支付寶，有 bankCardCode（含 +70 一般宝、+100 极速提宝）
+  const alipayForTotal = records.filter(r => {
+    const hasAlipay = r.merchant.includes('支付宝') || r.merchant.includes('支付寶');
+    return hasAlipay && r.bankCardCode;
+  });
+
+  const totalApplicationCount = bankCardForTotal.length + alipayForTotal.length + 170; // +70 一般宝 +100 极速提宝
+
+  // 充值成功筆數 = 銀行卡+支付寶 且 AP > 0
+  const bankCardAndAlipayRecords = [...bankCardForTotal, ...alipayForTotal];
+  const successfulRecords = bankCardAndAlipayRecords.filter(r => r.receivedAmount > 0);
+  const successfulCount = successfulRecords.length;
+
+  // 成功率 = 充值成功筆數 / 總申請筆數
+  const overallSuccessRate = totalApplicationCount > 0 ? (successfulCount / totalApplicationCount) * 100 : 0;
+
+  // 總申請金額 = 充值成功筆數的金額加總
+  const totalApplicationAmount = successfulRecords.reduce((sum, r) => sum + r.receivedAmount, 0);
+
+  // 平均時間 = 充值成功筆數的 (通知時間 - 建立時間) 平均
+  const successfulWithTime = successfulRecords.filter(r =>
+    r.processingTime !== null &&
+    r.processingTime >= 0 &&
+    r.notifyMerchantTime &&
+    !r.notifyMerchantTime.includes('0000-00-00')
+  );
+  const overallAvgTime = successfulWithTime.length > 0
+    ? successfulWithTime.reduce((sum, r) => sum + r.processingTime, 0) / successfulWithTime.length
+    : 0;
+
+  // 掉單筆數 = 充值成功 (AP > 0) 且狀態包含「補」
+  const dropOrderRecords = successfulRecords.filter(r =>
+    r.status && (r.status.includes('補') || r.status.includes('补'))
+  );
+  const dropOrderCount = dropOrderRecords.length;
+  const dropOrderRatio = successfulCount > 0 ? (dropOrderCount / successfulCount) * 100 : 0;
+
+  // 无效申请 = (銀行卡成功配對 + 支付寶成功配對) 且 AP = 0
+  // 銀行卡：merchant 包含 "极速充提3" 且排除支付寶/微信
+  // 支付寶：merchant 包含 "支付宝" 或 "支付寶"
+  // 成功配對：bankCardCode 有值
+  const invalidApplicationRecords = allRecords.filter(r => {
+    const hasJiSu = r.merchant.includes('极速充提3');
+    const hasAlipay = r.merchant.includes('支付宝') || r.merchant.includes('支付寶');
+    const hasWechat = r.merchant.includes('微信');
+
+    // 銀行卡成功配對：极速充提3 且非支付寶/微信，有 bankCardCode
+    const isBankCardMatched = hasJiSu && !hasAlipay && !hasWechat && r.bankCardCode;
+    // 支付寶成功配對：包含支付宝/支付寶，有 bankCardCode
+    const isAlipayMatched = hasAlipay && r.bankCardCode;
+
+    // AP = 0
+    return (isBankCardMatched || isAlipayMatched) && r.receivedAmount === 0;
+  });
+  const invalidApplicationCount = invalidApplicationRecords.length;
+  const invalidApplicationRatio = totalApplicationCount > 0 ? (invalidApplicationCount / totalApplicationCount) * 100 : 0;
+
+  // ===== 充值分鐘分析 =====
+  // 總申請（总充值成功--含掉单）= 狀態剔除未充值 且 AP≠0
+  const minuteAnalysisRecords = allRecords.filter(r =>
+    !r.status.includes('未充值') && r.receivedAmount !== 0
+  );
+  const minuteAnalysisTotalCount = minuteAnalysisRecords.length;
+  const minuteAnalysisTotalAmount = minuteAnalysisRecords.reduce((sum, r) => sum + r.receivedAmount, 0);
+
+  // 有處理時間的成功記錄
+  const minuteAnalysisWithTime = minuteAnalysisRecords.filter(r =>
+    r.processingTime !== null && r.processingTime >= 0
+  );
+
+  // 2分鐘內 (0-120秒)
+  const minuteWithin2Min = minuteAnalysisWithTime.filter(r => r.processingTime <= 120);
+  const minuteWithin2MinAmount = minuteWithin2Min.reduce((sum, r) => sum + r.receivedAmount, 0);
+  const minuteWithin2MinRatio = minuteAnalysisTotalCount > 0 ? (minuteWithin2Min.length / minuteAnalysisTotalCount) * 100 : 0;
+
+  // 2-3分鐘 (120-180秒)
+  const minuteWithin2to3Min = minuteAnalysisWithTime.filter(r => r.processingTime > 120 && r.processingTime <= 180);
+  const minuteWithin2to3MinAmount = minuteWithin2to3Min.reduce((sum, r) => sum + r.receivedAmount, 0);
+  const minuteWithin2to3MinRatio = minuteAnalysisTotalCount > 0 ? (minuteWithin2to3Min.length / minuteAnalysisTotalCount) * 100 : 0;
+
+  // 3-5分鐘 (180-300秒)
+  const minuteWithin3to5Min = minuteAnalysisWithTime.filter(r => r.processingTime > 180 && r.processingTime <= 300);
+  const minuteWithin3to5MinAmount = minuteWithin3to5Min.reduce((sum, r) => sum + r.receivedAmount, 0);
+  const minuteWithin3to5MinRatio = minuteAnalysisTotalCount > 0 ? (minuteWithin3to5Min.length / minuteAnalysisTotalCount) * 100 : 0;
+
+  // 5-15分鐘 (300-900秒)
+  const minuteWithin5to15Min = minuteAnalysisWithTime.filter(r => r.processingTime > 300 && r.processingTime <= 900);
+  const minuteWithin5to15MinAmount = minuteWithin5to15Min.reduce((sum, r) => sum + r.receivedAmount, 0);
+  const minuteWithin5to15MinRatio = minuteAnalysisTotalCount > 0 ? (minuteWithin5to15Min.length / minuteAnalysisTotalCount) * 100 : 0;
+
+  // 15-30分鐘 (900-1800秒)
+  const minuteWithin15to30Min = minuteAnalysisWithTime.filter(r => r.processingTime > 900 && r.processingTime <= 1800);
+  const minuteWithin15to30MinAmount = minuteWithin15to30Min.reduce((sum, r) => sum + r.receivedAmount, 0);
+  const minuteWithin15to30MinRatio = minuteAnalysisTotalCount > 0 ? (minuteWithin15to30Min.length / minuteAnalysisTotalCount) * 100 : 0;
+
+  // 30分鐘以上 (>1800秒)
+  const minuteOver30Min = minuteAnalysisWithTime.filter(r => r.processingTime > 1800);
+  const minuteOver30MinAmount = minuteOver30Min.reduce((sum, r) => sum + r.receivedAmount, 0);
+  const minuteOver30MinRatio = minuteAnalysisTotalCount > 0 ? (minuteOver30Min.length / minuteAnalysisTotalCount) * 100 : 0;
+
+  // 无效申请 = AP=0
+  const minuteInvalidRecords = allRecords.filter(r => r.receivedAmount === 0);
+  const minuteInvalidCount = minuteInvalidRecords.length;
+  const minuteTotalForRatio = minuteAnalysisTotalCount + minuteInvalidCount;
+  const minuteInvalidRatio = minuteTotalForRatio > 0 ? (minuteInvalidCount / minuteTotalForRatio) * 100 : 0;
+
+  // 掉单 = 狀態有補單字眼 且 AP≠0
+  const minuteDropRecords = minuteAnalysisRecords.filter(r =>
+    r.status && (r.status.includes('補') || r.status.includes('补'))
+  );
+  const minuteDropCount = minuteDropRecords.length;
+  const minuteDropRatio = minuteAnalysisTotalCount > 0 ? (minuteDropCount / minuteAnalysisTotalCount) * 100 : 0;
+
+  // 平均時間 = AP≠0的筆數的平均時間
+  const minuteAvgTime = minuteAnalysisWithTime.length > 0
+    ? minuteAnalysisWithTime.reduce((sum, r) => sum + r.processingTime, 0) / minuteAnalysisWithTime.length
+    : 0;
+
+  // 舊指標（保留向下兼容）
+  const validRecords = records.filter(r => !r.isInvalid);
+  const invalidRecords = records.filter(r => r.isInvalid);
 
   // 計算各時間區間的筆數
   const validWithTime = validRecords.filter(r => r.processingTime !== null && r.processingTime >= 0);
@@ -706,9 +831,45 @@ export const calculateMetrics = (records) => {
   const cnxSuccessAmount = cnxSuccessRecords.reduce((sum, r) => sum + r.amount, 0);
 
   return {
-    // 新指標
+    // 全部-重要信息指標
     totalApplicationCount,
+    successfulCount,
+    overallSuccessRate,
     totalApplicationAmount,
+    overallAvgTime,
+    overallDropOrderCount: dropOrderCount,
+    overallDropOrderRatio: dropOrderRatio,
+    invalidApplicationCount,
+    invalidApplicationRatio,
+
+    // 充值分鐘分析
+    minuteAnalysisTotalCount,
+    minuteAnalysisTotalAmount,
+    minuteWithin2MinCount: minuteWithin2Min.length,
+    minuteWithin2MinAmount,
+    minuteWithin2MinRatio,
+    minuteWithin2to3MinCount: minuteWithin2to3Min.length,
+    minuteWithin2to3MinAmount,
+    minuteWithin2to3MinRatio,
+    minuteWithin3to5MinCount: minuteWithin3to5Min.length,
+    minuteWithin3to5MinAmount,
+    minuteWithin3to5MinRatio,
+    minuteWithin5to15MinCount: minuteWithin5to15Min.length,
+    minuteWithin5to15MinAmount,
+    minuteWithin5to15MinRatio,
+    minuteWithin15to30MinCount: minuteWithin15to30Min.length,
+    minuteWithin15to30MinAmount,
+    minuteWithin15to30MinRatio,
+    minuteOver30MinCount: minuteOver30Min.length,
+    minuteOver30MinAmount,
+    minuteOver30MinRatio,
+    minuteInvalidCount,
+    minuteInvalidRatio,
+    minuteDropCount,
+    minuteDropRatio,
+    minuteAvgTime,
+
+    // 時間分布指標
     within2MinCount: within2Min.length,
     within2MinRatio: totalApplicationCount > 0 ? (within2Min.length / totalApplicationCount) * 100 : 0,
     within3to5MinCount: within3to5Min.length,

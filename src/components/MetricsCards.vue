@@ -32,18 +32,32 @@ const showNoCreditDowngradeDetails = ref(false);
 const showAlipayNoCreditDowngradeDetails = ref(false);
 const showAlipayC2c = ref(true);
 const showAlipayFraud = ref(true);
+const showMinuteAnalysis = ref(true);
 
 // 金額區間列表
 const amountRanges = [100, 200, 300, 500, 1000, 1500, 2000, 3000, 5000, 6000, 7000, 8000, 9000, 10000, 15000, 20000, 30000];
 
 // 第一区域：重要信息
+// 公式：
+// - 總申請筆數 = 所有充值筆數
+// - 成功率 = 充值成功筆數 (AP > 0) / 總申請筆數
+// - 總申請金額 = 充值成功筆數金額加總
+// - 平均時間 = 充值成功筆數的 (通知時間 - 建立時間) 平均
+// - 掉單筆數 = 充值成功 (AP > 0) 且狀態包含「補」
 const generalCards = computed(() => [
   {
     title: '总申请笔数',
     value: (props.metrics.totalApplicationCount || 0).toLocaleString(),
-    unit: `(成功率 ${(props.metrics.successRate || 0).toFixed(2)}%)`,
+    unit: `(成功率 ${(props.metrics.overallSuccessRate || 0).toFixed(2)}%)`,
     color: '#0a84ff',
     icon: '📊'
+  },
+  {
+    title: '总充值成功（含掉单）',
+    value: (props.metrics.successfulCount || 0).toLocaleString(),
+    unit: '笔',
+    color: '#30d158',
+    icon: '✅'
   },
   {
     title: '总申请金额',
@@ -54,22 +68,22 @@ const generalCards = computed(() => [
   },
   {
     title: '平均处理时间',
-    value: formatTime(props.metrics.avgTimeSeconds),
+    value: formatTime(props.metrics.overallAvgTime),
     unit: '',
     color: '#0a84ff',
     icon: '⏱️'
   },
   {
     title: '无效申请',
-    value: (props.metrics.invalidCount || 0).toLocaleString(),
-    unit: `(${(props.metrics.invalidRatio || 0).toFixed(2)}%)`,
+    value: (props.metrics.invalidApplicationCount || 0).toLocaleString(),
+    unit: `(${(props.metrics.invalidApplicationRatio || 0).toFixed(2)}%)`,
     color: '#ff453a',
     icon: '❌'
   },
   {
     title: '掉单笔数',
-    value: (props.metrics.dropOrderCount || 0).toLocaleString(),
-    unit: `(${(props.metrics.dropOrderRatio || 0).toFixed(2)}%)`,
+    value: (props.metrics.overallDropOrderCount || 0).toLocaleString(),
+    unit: `(${(props.metrics.overallDropOrderRatio || 0).toFixed(2)}%)`,
     color: '#ff9f0a',
     icon: '⚠️'
   }
@@ -157,7 +171,7 @@ const timeCards = computed(() => [
           <h3 class="section-title">重要信息</h3>
           <span class="toggle-icon">{{ showGeneral ? '▼' : '▶' }}</span>
         </div>
-        <div v-show="showGeneral" class="metrics-grid five-grid">
+        <div v-show="showGeneral" class="metrics-grid six-grid">
           <div
             v-for="card in generalCards"
             :key="card.title"
@@ -196,6 +210,80 @@ const timeCards = computed(() => [
               <span class="card-unit">{{ card.unit }}</span>
             </div>
           </div>
+        </div>
+      </div>
+
+      <!-- 充值分鐘分析 -->
+      <div class="metrics-section">
+        <div class="section-header" @click="showMinuteAnalysis = !showMinuteAnalysis">
+          <h3 class="section-title">充值分鐘分析</h3>
+          <span class="toggle-icon">{{ showMinuteAnalysis ? '▼' : '▶' }}</span>
+        </div>
+        <div v-show="showMinuteAnalysis" class="minute-analysis-content">
+          <table class="minute-table">
+            <thead>
+              <tr>
+                <th>項目</th>
+                <th>筆數</th>
+                <th>金額/百分比</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="highlight-row">
+                <td>總申請（总充值成功--含掉单）</td>
+                <td>{{ (metrics.minuteAnalysisTotalCount || 0).toLocaleString() }}</td>
+                <td>{{ formatAmount(metrics.minuteAnalysisTotalAmount || 0) }} 元</td>
+              </tr>
+              <tr>
+                <td>2分鐘內</td>
+                <td>{{ (metrics.minuteWithin2MinCount || 0).toLocaleString() }} ({{ (metrics.minuteWithin2MinRatio || 0).toFixed(2) }}%)</td>
+                <td>{{ formatAmount(metrics.minuteWithin2MinAmount || 0) }} 元</td>
+              </tr>
+              <tr>
+                <td>2-3分鐘</td>
+                <td>{{ (metrics.minuteWithin2to3MinCount || 0).toLocaleString() }} ({{ (metrics.minuteWithin2to3MinRatio || 0).toFixed(2) }}%)</td>
+                <td>{{ formatAmount(metrics.minuteWithin2to3MinAmount || 0) }} 元</td>
+              </tr>
+              <tr>
+                <td>3-5分鐘</td>
+                <td>{{ (metrics.minuteWithin3to5MinCount || 0).toLocaleString() }} ({{ (metrics.minuteWithin3to5MinRatio || 0).toFixed(2) }}%)</td>
+                <td>{{ formatAmount(metrics.minuteWithin3to5MinAmount || 0) }} 元</td>
+              </tr>
+              <tr>
+                <td>5-15分鐘</td>
+                <td>{{ (metrics.minuteWithin5to15MinCount || 0).toLocaleString() }} ({{ (metrics.minuteWithin5to15MinRatio || 0).toFixed(2) }}%)</td>
+                <td>{{ formatAmount(metrics.minuteWithin5to15MinAmount || 0) }} 元</td>
+              </tr>
+              <tr>
+                <td>15-30分鐘</td>
+                <td>{{ (metrics.minuteWithin15to30MinCount || 0).toLocaleString() }} ({{ (metrics.minuteWithin15to30MinRatio || 0).toFixed(2) }}%)</td>
+                <td>{{ formatAmount(metrics.minuteWithin15to30MinAmount || 0) }} 元</td>
+              </tr>
+              <tr>
+                <td>30分鐘以上</td>
+                <td>{{ (metrics.minuteOver30MinCount || 0).toLocaleString() }} ({{ (metrics.minuteOver30MinRatio || 0).toFixed(2) }}%)</td>
+                <td>{{ formatAmount(metrics.minuteOver30MinAmount || 0) }} 元</td>
+              </tr>
+              <tr class="divider-row">
+                <td colspan="3"></td>
+              </tr>
+              <tr>
+                <td>无效申请</td>
+                <td>{{ (metrics.minuteInvalidCount || 0).toLocaleString() }}</td>
+                <td>-- / ({{ (metrics.minuteInvalidRatio || 0).toFixed(2) }}%)</td>
+              </tr>
+              <tr>
+                <td>掉单</td>
+                <td>{{ (metrics.minuteDropCount || 0).toLocaleString() }}</td>
+                <td>-- / ({{ (metrics.minuteDropRatio || 0).toFixed(2) }}%)</td>
+              </tr>
+              <tr class="highlight-row">
+                <td>平均時間</td>
+                <td>{{ formatTime(metrics.minuteAvgTime) }}</td>
+                <td>--</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </template>
@@ -797,8 +885,16 @@ const timeCards = computed(() => [
   padding: 0 16px 16px;
 }
 
+.four-grid {
+  grid-template-columns: repeat(4, 1fr);
+}
+
 .five-grid {
   grid-template-columns: repeat(5, 1fr);
+}
+
+.six-grid {
+  grid-template-columns: repeat(6, 1fr);
 }
 
 .metric-card {
@@ -959,8 +1055,82 @@ const timeCards = computed(() => [
   font-size: 16px;
 }
 
+/* 充值分鐘分析樣式 */
+.minute-analysis-content {
+  padding: 0 20px 16px;
+}
+
+.minute-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #2c2c2e;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.minute-table th {
+  background: #3a3a3c;
+  color: #8e8e93;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 14px 16px;
+  text-align: left;
+}
+
+.minute-table th:nth-child(2),
+.minute-table th:nth-child(3) {
+  text-align: right;
+}
+
+.minute-table td {
+  padding: 14px 16px;
+  font-size: 14px;
+  color: #fff;
+  border-bottom: 1px solid #3a3a3c;
+}
+
+.minute-table td:nth-child(2) {
+  text-align: right;
+  color: #0a84ff;
+  font-weight: 600;
+}
+
+.minute-table td:nth-child(3) {
+  text-align: right;
+  color: #8e8e93;
+}
+
+.minute-table tr:last-child td {
+  border-bottom: none;
+}
+
+.minute-table tr.highlight-row {
+  background: #1a3a5c;
+}
+
+.minute-table tr.highlight-row td {
+  color: #fff;
+  font-weight: 600;
+}
+
+.minute-table tr.highlight-row td:nth-child(2) {
+  color: #30d158;
+}
+
+.minute-table tr.divider-row td {
+  padding: 8px 0;
+  background: #1c1c1e;
+  border-bottom: none;
+}
+
 @media (max-width: 1200px) {
+  .four-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
   .five-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .six-grid {
     grid-template-columns: repeat(3, 1fr);
   }
   .jisu-content {
@@ -972,6 +1142,9 @@ const timeCards = computed(() => [
   .five-grid {
     grid-template-columns: repeat(2, 1fr);
   }
+  .six-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
   .jisu-content {
     grid-template-columns: 1fr;
   }
@@ -979,6 +1152,9 @@ const timeCards = computed(() => [
 
 @media (max-width: 500px) {
   .five-grid {
+    grid-template-columns: 1fr;
+  }
+  .six-grid {
     grid-template-columns: 1fr;
   }
 
