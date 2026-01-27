@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>支付數據分析平台 PRD</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      background: #f5f7fa;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+
+    header {
+      background: linear-gradient(135deg, #4a4a9e 0%, #5a5abe 100%);
+      color: white;
+      padding: 40px 20px;
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    header h1 {
+      font-size: 2.5em;
+      margin-bottom: 10px;
+    }
+
+    header p {
+      font-size: 1.2em;
+      opacity: 0.9;
+    }
+
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      margin-bottom: 30px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    }
+
+    h2 {
+      color: #4a4a9e;
+      font-size: 1.5em;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #4a4a9e;
+    }
+
+    h3 {
+      color: #333;
+      font-size: 1.2em;
+      margin: 20px 0 15px 0;
+    }
+
+    h4 {
+      color: #666;
+      font-size: 1em;
+      margin: 15px 0 10px 0;
+    }
+
+    p {
+      margin-bottom: 15px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 15px 0;
+      font-size: 14px;
+    }
+
+    th, td {
+      padding: 12px 15px;
+      text-align: left;
+      border-bottom: 1px solid #e8e8e8;
+    }
+
+    th {
+      background: #5cb85c;
+      color: white;
+      font-weight: 600;
+    }
+
+    tr:hover {
+      background: #f9f9f9;
+    }
+
+    code {
+      background: #f0f0f0;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-family: 'Monaco', 'Menlo', monospace;
+      font-size: 0.9em;
+    }
+
+    pre {
+      background: #2d2d2d;
+      color: #f8f8f2;
+      padding: 20px;
+      border-radius: 8px;
+      overflow-x: auto;
+      margin: 15px 0;
+    }
+
+    pre code {
+      background: none;
+      padding: 0;
+      color: inherit;
+    }
+
+    ul, ol {
+      margin: 15px 0;
+      padding-left: 30px;
+    }
+
+    li {
+      margin-bottom: 8px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .badge-purple {
+      background: #4a4a9e;
+      color: white;
+    }
+
+    .badge-green {
+      background: #5cb85c;
+      color: white;
+    }
+
+    .badge-orange {
+      background: #ff9f0a;
+      color: white;
+    }
+
+    .badge-red {
+      background: #ff453a;
+      color: white;
+    }
+
+    .color-box {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border-radius: 4px;
+      vertical-align: middle;
+      margin-right: 8px;
+    }
+
+    .toc {
+      background: #f8f9fa;
+      padding: 20px 30px;
+      border-radius: 8px;
+      margin-bottom: 30px;
+    }
+
+    .toc h3 {
+      margin-top: 0;
+    }
+
+    .toc ul {
+      list-style: none;
+      padding-left: 0;
+    }
+
+    .toc li {
+      margin-bottom: 5px;
+    }
+
+    .toc a {
+      color: #4a4a9e;
+      text-decoration: none;
+    }
+
+    .toc a:hover {
+      text-decoration: underline;
+    }
+
+    .note {
+      background: #fff3cd;
+      border-left: 4px solid #ff9f0a;
+      padding: 15px 20px;
+      margin: 15px 0;
+      border-radius: 0 8px 8px 0;
+    }
+
+    .architecture {
+      background: #f8f9fa;
+      border: 1px solid #e8e8e8;
+      border-radius: 8px;
+      padding: 20px;
+      font-family: monospace;
+      white-space: pre;
+      overflow-x: auto;
+      line-height: 1.4;
+    }
+
+    footer {
+      text-align: center;
+      padding: 30px;
+      color: #666;
+      font-size: 14px;
+    }
+
+    @media (max-width: 768px) {
+      header h1 {
+        font-size: 1.8em;
+      }
+
+      .card {
+        padding: 20px;
+      }
+
+      table {
+        font-size: 12px;
+      }
+
+      th, td {
+        padding: 8px 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>支付數據分析平台</h1>
+    <p>Product Requirements Document (PRD)</p>
+  </header>
+
+  <div class="container">
+    <!-- 目錄 -->
+    <div class="toc">
+      <h3>目錄</h3>
+      <ul>
+        <li><a href="#overview">1. 產品概述</a></li>
+        <li><a href="#architecture">2. 功能架構</a></li>
+        <li><a href="#deposit">3. 充值分析報表</a></li>
+        <li><a href="#withdraw">4. 提現分析報表</a></li>
+        <li><a href="#weekly">5. 週報</a></li>
+        <li><a href="#charts">6. 圖表可視化</a></li>
+        <li><a href="#data-rules">7. 數據處理規則</a></li>
+        <li><a href="#export">8. 導出功能</a></li>
+        <li><a href="#ui-ux">9. UI/UX 設計規範</a></li>
+        <li><a href="#deployment">10. 部署資訊</a></li>
+        <li><a href="#pending">11. 待完善功能</a></li>
+        <li><a href="#appendix">12. 附錄</a></li>
+      </ul>
+    </div>
+
+    <!-- 1. 產品概述 -->
+    <div class="card" id="overview">
+      <h2>1. 產品概述</h2>
+
+      <h3>1.1 產品名稱</h3>
+      <p>支付數據分析平台（Payment Analytics Dashboard）</p>
+
+      <h3>1.2 產品定位</h3>
+      <p>一個基於 Web 的支付數據分析與可視化平台，用於分析充值和提現交易數據，提供多維度的統計指標、時間分佈分析和報表導出功能。</p>
+
+      <h3>1.3 目標用戶</h3>
+      <ul>
+        <li>支付運營團隊</li>
+        <li>財務分析人員</li>
+        <li>業務管理人員</li>
+      </ul>
+
+      <h3>1.4 技術棧</h3>
+      <table>
+        <tr><th>類別</th><th>技術</th></tr>
+        <tr><td>前端框架</td><td>Vue.js 3 (Composition API)</td></tr>
+        <tr><td>構建工具</td><td>Vite 7</td></tr>
+        <tr><td>圖表庫</td><td>Chart.js + vue-chartjs</td></tr>
+        <tr><td>數據處理</td><td>PapaParse</td></tr>
+        <tr><td>報表導出</td><td>SheetJS (xlsx)</td></tr>
+        <tr><td>部署</td><td>GitHub Pages</td></tr>
+      </table>
+    </div>
+
+    <!-- 2. 功能架構 -->
+    <div class="card" id="architecture">
+      <h2>2. 功能架構</h2>
+
+      <h3>2.1 系統架構</h3>
+      <div class="architecture">┌─────────────────────────────────────────────────────────────┐
+│                      前端應用 (Vue.js 3)                      │
+├─────────────┬─────────────┬─────────────┬─────────────────────┤
+│  充值分析    │  提現分析    │   週報      │   數據導出          │
+├─────────────┴─────────────┴─────────────┴─────────────────────┤
+│                    CSV 數據解析層                              │
+├───────────────────────────────────────────────────────────────┤
+│              數據源 (data.csv / withdraw.csv)                  │
+└───────────────────────────────────────────────────────────────┘</div>
+
+      <h3>2.2 導航結構</h3>
+      <table>
+        <tr><th>導航項</th><th>功能說明</th></tr>
+        <tr><td>充值分析報表</td><td>查看充值相關數據和指標</td></tr>
+        <tr><td>提現分析報表</td><td>查看提現相關數據和指標</td></tr>
+        <tr><td>週報</td><td>查看週報匯總數據</td></tr>
+      </table>
+    </div>
+
+    <!-- 3. 充值分析報表 -->
+    <div class="card" id="deposit">
+      <h2>3. 充值分析報表</h2>
+
+      <h3>3.1 篩選功能</h3>
+      <table>
+        <tr><th>篩選項</th><th>說明</th></tr>
+        <tr><td>商戶名稱</td><td>可搜索的下拉選單，支持模糊搜索</td></tr>
+        <tr><td>日期範圍</td><td>開始日期 - 結束日期</td></tr>
+        <tr><td>查詢按鈕</td><td>執行篩選查詢</td></tr>
+        <tr><td>匯出 Excel</td><td>導出當前篩選結果</td></tr>
+      </table>
+
+      <h3>3.2 渠道切換</h3>
+      <table>
+        <tr><th>渠道</th><th>篩選條件</th></tr>
+        <tr><td><span class="badge badge-purple">全部</span></td><td>顯示所有渠道匯總數據</td></tr>
+        <tr><td><span class="badge badge-green">极速(银行卡)</span></td><td>商戶含"极速充提3"且非支付寶/微信</td></tr>
+        <tr><td><span class="badge badge-green">极速(支付宝)</span></td><td>商戶含"支付宝"或"支付寶"</td></tr>
+        <tr><td><span class="badge badge-green">极速(微信)</span></td><td>商戶含"微信"</td></tr>
+      </table>
+
+      <h3>3.3 重要信息指標</h3>
+      <table>
+        <tr><th>指標</th><th>計算公式</th></tr>
+        <tr><td>總申請筆數</td><td>銀行卡成功配對 + 支付寶成功配對 + 微信成功配對 + 170</td></tr>
+        <tr><td>總充值成功（含掉單）</td><td>所有成功配對且 receivedAmount > 0 的記錄數</td></tr>
+        <tr><td>總申請金額</td><td>充值成功筆數的金額加總</td></tr>
+        <tr><td>平均處理時間</td><td>充值成功筆數的 (通知時間 - 建立時間) 平均</td></tr>
+        <tr><td>無效申請</td><td>狀態包含"未充值"的記錄數</td></tr>
+        <tr><td>掉單筆數</td><td>充值成功 (AP > 0) 且狀態包含「補」的記錄數</td></tr>
+      </table>
+
+      <h3>3.4 處理時間分佈</h3>
+      <table>
+        <tr><th>時間區段</th><th>條件</th></tr>
+        <tr><td>2分鐘內</td><td>processingTime &lt;= 120秒</td></tr>
+        <tr><td>3-5分鐘</td><td>120秒 &lt; processingTime &lt;= 300秒</td></tr>
+        <tr><td>5-15分鐘</td><td>300秒 &lt; processingTime &lt;= 900秒</td></tr>
+        <tr><td>15-30分鐘</td><td>900秒 &lt; processingTime &lt;= 1800秒</td></tr>
+        <tr><td>30分鐘以上</td><td>processingTime > 1800秒</td></tr>
+      </table>
+
+      <h3>3.5 支付寶渠道特別說明</h3>
+      <div class="note">
+        <strong>說明：</strong><br>
+        - 一般寶 有 +70<br>
+        - 极速提宝 有 +100
+      </div>
+    </div>
+
+    <!-- 4. 提現分析報表 -->
+    <div class="card" id="withdraw">
+      <h2>4. 提現分析報表</h2>
+
+      <h3>4.1 提現總覽指標</h3>
+      <table>
+        <tr><th>指標</th><th>計算公式</th></tr>
+        <tr><td>總提現成功筆數</td><td>實際轉出金額 (payoutAmount) > 0 的記錄數</td></tr>
+        <tr><td>總提現成功金額</td><td>payoutAmount 加總</td></tr>
+        <tr><td>平均處理時間</td><td>transferStatus = "轉帳完成" 的記錄平均處理時間</td></tr>
+        <tr><td>總提現申請筆數</td><td>所有記錄數（排除 test/qa 商戶）</td></tr>
+      </table>
+
+      <h3>4.2 提現成功時間區段</h3>
+      <table>
+        <tr><th>項目</th><th>條件</th></tr>
+        <tr><td>2分鐘內出款</td><td>avgTimeSeconds &lt; 120</td></tr>
+        <tr><td>2-5分鐘出款</td><td>120 &lt;= avgTimeSeconds &lt; 300</td></tr>
+        <tr><td>5-15分鐘出款</td><td>300 &lt;= avgTimeSeconds &lt; 900</td></tr>
+        <tr><td>15-30分鐘出款</td><td>900 &lt;= avgTimeSeconds &lt; 1800</td></tr>
+        <tr><td>超過30分鐘出款</td><td>avgTimeSeconds >= 1800</td></tr>
+      </table>
+
+      <h3>4.3 平均時間計算公式</h3>
+      <pre><code>IF(V為空, Q - T, Q - V)
+
+V = remainPoolCreateTime（餘額池建立時間）
+Q = notifyMerchantTime（通知商戶時間）
+T = requestTime（請求時間）
+
+條件：transferStatus = "轉帳完成"</code></pre>
+    </div>
+
+    <!-- 5. 週報 -->
+    <div class="card" id="weekly">
+      <h2>5. 週報</h2>
+
+      <h3>5.1 數據來源</h3>
+      <p>同時載入充值數據 (data.csv) 和提現數據 (withdraw.csv)</p>
+
+      <h3>5.2 週報內容</h3>
+      <table>
+        <tr><th>區塊</th><th>說明</th></tr>
+        <tr><td>充值匯總</td><td>按渠道統計充值數據</td></tr>
+        <tr><td>提現匯總</td><td>按渠道統計提現數據</td></tr>
+        <tr><td>平均時間與騙分</td><td>提現平均時間（卡/寶）等指標</td></tr>
+      </table>
+    </div>
+
+    <!-- 6. 圖表可視化 -->
+    <div class="card" id="charts">
+      <h2>6. 圖表可視化</h2>
+
+      <h3>6.1 狀態分佈（圓環圖）</h3>
+      <ul>
+        <li><span class="badge badge-green">成功</span> 到帳金額 > 0 且非補單</li>
+        <li><span class="badge badge-orange">補單</span> 狀態含補單字眼 且 到帳金額 > 0</li>
+      </ul>
+
+      <h3>6.2 銀行金額分佈（橫條圖）</h3>
+      <p>顯示 Top 8 銀行的充值金額分佈</p>
+
+      <h3>6.3 24小時交易分佈（柱狀圖）</h3>
+      <p>按小時統計充值成功筆數和金額</p>
+    </div>
+
+    <!-- 7. 數據處理規則 -->
+    <div class="card" id="data-rules">
+      <h2>7. 數據處理規則</h2>
+
+      <h3>7.1 數據過濾</h3>
+      <p>排除商戶名稱包含 <code>线下</code>、<code>test</code>、<code>qa</code> 的記錄</p>
+
+      <h3>7.2 銀行名稱標準化</h3>
+      <ul>
+        <li>移除「行動」前綴</li>
+        <li>簡體字轉繁體字</li>
+      </ul>
+
+      <h3>7.3 成功狀態關鍵字</h3>
+      <ul>
+        <li>已充值</li>
+        <li>信用評分上分</li>
+        <li>回單驗證上分</li>
+        <li>用戶确认到账</li>
+        <li>银商确认到账</li>
+        <li>信評上分</li>
+        <li>自動補單</li>
+        <li>商戶回調上分</li>
+      </ul>
+    </div>
+
+    <!-- 8. 導出功能 -->
+    <div class="card" id="export">
+      <h2>8. 導出功能</h2>
+
+      <h3>8.1 充值報表導出</h3>
+      <table>
+        <tr><th>工作表</th><th>內容</th></tr>
+        <tr><td>總覽</td><td>重要指標匯總</td></tr>
+        <tr><td>時間區段分析</td><td>各時間區段筆數/金額</td></tr>
+        <tr><td>詳細記錄</td><td>所有篩選後的記錄明細</td></tr>
+      </table>
+
+      <h3>8.2 提現報表導出</h3>
+      <table>
+        <tr><th>工作表</th><th>內容</th></tr>
+        <tr><td>總覽</td><td>提現指標匯總</td></tr>
+        <tr><td>時間區段分析</td><td>各時間區段筆數/金額</td></tr>
+      </table>
+    </div>
+
+    <!-- 9. UI/UX 設計規範 -->
+    <div class="card" id="ui-ux">
+      <h2>9. UI/UX 設計規範</h2>
+
+      <h3>9.1 色彩規範</h3>
+      <table>
+        <tr><th>元素</th><th>顏色</th></tr>
+        <tr><td>主色調（Header/按鈕）</td><td><span class="color-box" style="background:#4a4a9e"></span>#4a4a9e（紫色）</td></tr>
+        <tr><td>成功/表頭</td><td><span class="color-box" style="background:#5cb85c"></span>#5cb85c（綠色）</td></tr>
+        <tr><td>背景</td><td><span class="color-box" style="background:#f5f7fa"></span>#f5f7fa（淺灰）</td></tr>
+        <tr><td>卡片背景</td><td><span class="color-box" style="background:#ffffff;border:1px solid #ddd"></span>#ffffff（白色）</td></tr>
+        <tr><td>警告</td><td><span class="color-box" style="background:#ff9f0a"></span>#ff9f0a（橙色）</td></tr>
+        <tr><td>錯誤</td><td><span class="color-box" style="background:#ff453a"></span>#ff453a（紅色）</td></tr>
+      </table>
+
+      <h3>9.2 響應式設計</h3>
+      <table>
+        <tr><th>斷點</th><th>佈局調整</th></tr>
+        <tr><td>> 1200px</td><td>6列網格</td></tr>
+        <tr><td>768px - 1200px</td><td>2-3列網格，側邊欄收縮</td></tr>
+        <tr><td>&lt; 768px</td><td>單列網格，側邊欄僅顯示圖標</td></tr>
+      </table>
+    </div>
+
+    <!-- 10. 部署資訊 -->
+    <div class="card" id="deployment">
+      <h2>10. 部署資訊</h2>
+
+      <h3>10.1 部署方式</h3>
+      <p>GitHub Actions 自動部署到 GitHub Pages</p>
+
+      <h3>10.2 部署 URL</h3>
+      <p><a href="https://unieo175-cmd.github.io/Payment/" target="_blank">https://unieo175-cmd.github.io/Payment/</a></p>
+
+      <h3>10.3 觸發條件</h3>
+      <ul>
+        <li>Push 到 main 分支</li>
+        <li>手動觸發 (workflow_dispatch)</li>
+      </ul>
+    </div>
+
+    <!-- 11. 待完善功能 -->
+    <div class="card" id="pending">
+      <h2>11. 待完善功能</h2>
+
+      <div class="note">
+        以下功能目前顯示為 0 或固定值，需要補充計算公式
+      </div>
+
+      <h3>11.1 充值分析</h3>
+      <table>
+        <tr><th>功能</th><th>狀態</th></tr>
+        <tr><td>建單成功等待無配對</td><td><span class="badge badge-orange">尚缺公式計算</span></td></tr>
+        <tr><td>取無卡06提示</td><td><span class="badge badge-orange">尚缺公式計算</span></td></tr>
+        <tr><td>騙分拉黑</td><td><span class="badge badge-orange">尚缺公式計算</span></td></tr>
+        <tr><td>卡驗及人驗</td><td><span class="badge badge-orange">尚缺公式計算</span></td></tr>
+        <tr><td>騙分沒到賬來找（人工/信評）</td><td><span class="badge badge-orange">尚缺公式計算</span></td></tr>
+        <tr><td>寶轉卡/寶轉寶渠道統計</td><td><span class="badge badge-orange">尚缺公式計算</span></td></tr>
+        <tr><td>整體配對成功/提現申請</td><td><span class="badge badge-orange">尚缺公式計算</span></td></tr>
+      </table>
+
+      <h3>11.2 提現分析</h3>
+      <table>
+        <tr><th>功能</th><th>狀態</th></tr>
+        <tr><td>無卡空單率</td><td><span class="badge badge-orange">尚缺公式計算</span></td></tr>
+        <tr><td>充值配對率</td><td><span class="badge badge-orange">需與充值數據關聯</span></td></tr>
+        <tr><td>配對後成功率</td><td><span class="badge badge-orange">需與充值數據關聯</span></td></tr>
+      </table>
+    </div>
+
+    <!-- 12. 附錄 -->
+    <div class="card" id="appendix">
+      <h2>12. 附錄</h2>
+
+      <h3>12.1 CSV 欄位對照表（充值）</h3>
+      <table>
+        <tr><th>欄位索引</th><th>欄位名稱</th><th>說明</th></tr>
+        <tr><td>0</td><td>id</td><td>流水號</td></tr>
+        <tr><td>2</td><td>merchant</td><td>商戶名稱</td></tr>
+        <tr><td>3</td><td>amount</td><td>申請金額</td></tr>
+        <tr><td>6</td><td>bankCardCode</td><td>銀行卡號</td></tr>
+        <tr><td>8</td><td>bankName</td><td>銀行名稱</td></tr>
+        <tr><td>12</td><td>receivedAmount</td><td>到帳金額 (AP欄)</td></tr>
+        <tr><td>13</td><td>status</td><td>狀態 (N欄)</td></tr>
+        <tr><td>16</td><td>requestTime</td><td>請求日期 (Q欄)</td></tr>
+        <tr><td>19</td><td>notifyMerchantTime</td><td>通知商戶時間 (T欄)</td></tr>
+        <tr><td>37</td><td>receiptVerifyResultTime</td><td>回單驗證結果時間 (AL欄)</td></tr>
+      </table>
+
+      <h3>12.2 CSV 欄位對照表（提現）</h3>
+      <table>
+        <tr><th>欄位索引</th><th>欄位名稱</th><th>說明</th></tr>
+        <tr><td>8</td><td>actualAmount</td><td>實際金額 (I欄)</td></tr>
+        <tr><td>21</td><td>remainPoolCreateTime</td><td>餘額池建立時間 (V欄)</td></tr>
+        <tr><td>27</td><td>payoutAmount</td><td>轉出金額 (AB欄)</td></tr>
+        <tr><td>28</td><td>transferStatus</td><td>轉帳狀態 (AC欄)</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <footer>
+    <p>支付數據分析平台 PRD v1.0.0 | 更新日期：2026-01-27</p>
+  </footer>
+</body>
+</html>
