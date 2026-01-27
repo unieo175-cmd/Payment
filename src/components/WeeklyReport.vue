@@ -521,7 +521,7 @@ const analysisMetrics = computed(() => {
     { category: '金寶', successRate: gbMetrics.successRate, within3MinRate: gbMetrics.within3MinRate, avgTime: gbMetrics.avgTime, withdrawSuccessRate: withdrawGB.successRate, withdrawWithin3MinRate: withdrawGB.within3MinRate, withdrawAvgTime: withdrawGB.avgTime },
     { category: '極速', successRate: auctionMetrics.successRate, within3MinRate: auctionMetrics.within3MinRate, avgTime: auctionMetrics.avgTime, withdrawSuccessRate: withdrawAuction.successRate, withdrawWithin3MinRate: withdrawAuction.within3MinRate, withdrawAvgTime: withdrawAuction.avgTime },
     { category: '第三方', successRate: thirdPartyMetrics.successRate, within3MinRate: thirdPartyMetrics.within3MinRate, avgTime: thirdPartyMetrics.avgTime, withdrawSuccessRate: withdrawThirdParty.successRate, withdrawWithin3MinRate: withdrawThirdParty.within3MinRate, withdrawAvgTime: withdrawThirdParty.avgTime },
-    { category: '非正向信评', successRate: creditMetrics.successRate, within3MinRate: creditMetrics.within3MinRate, avgTime: creditMetrics.avgTime, withdrawSuccessRate: 0, withdrawWithin3MinRate: 0, withdrawAvgTime: 0 }
+    { category: '非正向信评', successRate: creditMetrics.successRate, within3MinRate: creditMetrics.within3MinRate, avgTime: creditMetrics.avgTime, withdrawSuccessRate: null, withdrawWithin3MinRate: null, withdrawAvgTime: null }
   ];
 });
 
@@ -1083,9 +1083,9 @@ setDefaultDate();
                 <td class="rate-cell">{{ (row.successRate * 100).toFixed(2) }}%</td>
                 <td class="rate-cell">{{ (row.within3MinRate * 100).toFixed(2) }}%</td>
                 <td class="time-cell">{{ formatTime(row.avgTime) }}</td>
-                <td class="withdraw-rate-cell">{{ (row.withdrawSuccessRate * 100).toFixed(2) }}%</td>
-                <td class="withdraw-rate-cell">{{ (row.withdrawWithin3MinRate * 100).toFixed(2) }}%</td>
-                <td class="withdraw-time-cell">{{ formatTime(row.withdrawAvgTime) }}</td>
+                <td class="withdraw-rate-cell">{{ row.withdrawSuccessRate === null ? '/' : (row.withdrawSuccessRate * 100).toFixed(2) + '%' }}</td>
+                <td class="withdraw-rate-cell">{{ row.withdrawWithin3MinRate === null ? '/' : (row.withdrawWithin3MinRate * 100).toFixed(2) + '%' }}</td>
+                <td class="withdraw-time-cell">{{ row.withdrawAvgTime === null ? '/' : formatTime(row.withdrawAvgTime) }}</td>
               </tr>
             </tbody>
           </table>
