@@ -106,7 +106,7 @@ const activeChannel = ref('all'); // 'all', 'bankCard', 'alipay', 'wechat'
               {{ (metrics.totalRecords || 0).toLocaleString() }}
               <span class="card-unit">笔</span>
             </div>
-            <div class="card-formula">公式：所有記錄（排除test/qa商戶）</div>
+            <div class="card-formula">公式：所有記錄（排除test/qa商戶和剔除重複訂單號的筆數）</div>
           </div>
         </div>
       </div>

@@ -1643,6 +1643,10 @@ export const exportWeeklyToExcel = (weeklyMetrics, analysisMetrics, weekRange) =
 
 // 計算提現指標
 export const calculateWithdrawMetrics = (records, depositMetrics = null) => {
+  // 計算唯一訂單號（流水號）的筆數
+  const uniqueOrderIds = new Set(records.map(r => r.id));
+  const uniqueOrderCount = uniqueOrderIds.size;
+
   // 總提現筆數（以實際轉出金額 > 0 為準）
   const successRecords = records.filter(r => r.actualAmount > 0);
   const totalWithdrawCount = successRecords.length;
@@ -1721,10 +1725,12 @@ export const calculateWithdrawMetrics = (records, depositMetrics = null) => {
   // 订单成功占比 = 提現成功筆數 / 總記錄數
   const withdrawOrderSuccessRate = records.length > 0 ? (withdrawOrderSuccessCount / records.length) * 100 : 0;
 
-  // 平均處理時間
-  const recordsWithTime = records.filter(r => r.avgTimeSeconds !== null && r.avgTimeSeconds >= 0);
-  const avgProcessingTime = recordsWithTime.length > 0
-    ? recordsWithTime.reduce((sum, r) => sum + r.avgTimeSeconds, 0) / recordsWithTime.length
+  // 平均處理時間：只計算 isAutoWithdraw=1（AC="轉帳完成" AND P="通知完成"）的記錄
+  const autoWithdrawRecordsWithTime = records.filter(r =>
+    r.isAutoWithdraw === 1 && r.avgTimeSeconds !== null && r.avgTimeSeconds >= 0
+  );
+  const avgProcessingTime = autoWithdrawRecordsWithTime.length > 0
+    ? autoWithdrawRecordsWithTime.reduce((sum, r) => sum + r.avgTimeSeconds, 0) / autoWithdrawRecordsWithTime.length
     : 0;
 
   // ===== 銀行卡渠道提現 =====
@@ -1735,11 +1741,12 @@ export const calculateWithdrawMetrics = (records, depositMetrics = null) => {
   const bankCardWithdrawCount = bankCardWithdrawRecords.length;
   const bankCardWithdrawAmount = bankCardWithdrawRecords.reduce((sum, r) => sum + r.payoutAmount, 0);
 
-  // 銀行卡平均時間：remark = "银行卡" 且 transferStatus = "轉帳完成"
-  // 公式：AVERAGEIFS(AF:AF, AC:AC, "银行卡", AD:AD, "轉帳完成")
-  // AF = IF(V為空, Q - T, Q - V)
+  // 銀行卡平均時間：receivingBank != "支付宝" 且 transferStatus = "轉帳完成"
+  // 公式：AVERAGEIFS(AF:AF, AC:AC, "<>支付宝", AD:AD, "轉帳完成")
+  // AC = 收款銀行 (receivingBank), AD = 說明 (transferStatus)
+  // AF = IFERROR(Q - T, U - T)
   const bankCardTransferComplete = records.filter(r =>
-    r.remark === '银行卡' && r.transferStatus === '轉帳完成' &&
+    r.receivingBank !== '支付宝' && r.transferStatus === '轉帳完成' &&
     r.avgTimeSeconds !== null && r.avgTimeSeconds >= 0
   );
   const bankCardAvgTime = bankCardTransferComplete.length > 0
@@ -1766,10 +1773,11 @@ export const calculateWithdrawMetrics = (records, depositMetrics = null) => {
   const alipayWithdrawCount = alipayWithdrawRecords.length;
   const alipayWithdrawAmount = alipayWithdrawRecords.reduce((sum, r) => sum + r.payoutAmount, 0);
 
-  // 支付寶平均時間：remark = "支付宝" 且 transferStatus = "轉帳完成"
+  // 支付寶平均時間：receivingBank = "支付宝" 且 transferStatus = "轉帳完成"
   // 公式：AVERAGEIFS(AF:AF, AC:AC, "支付宝", AD:AD, "轉帳完成")
+  // AC = 收款銀行 (receivingBank), AD = 說明 (transferStatus)
   const alipayTransferComplete = records.filter(r =>
-    r.remark === '支付宝' && r.transferStatus === '轉帳完成' &&
+    r.receivingBank === '支付宝' && r.transferStatus === '轉帳完成' &&
     r.avgTimeSeconds !== null && r.avgTimeSeconds >= 0
   );
   const alipayAvgTime = alipayTransferComplete.length > 0
@@ -1823,7 +1831,7 @@ export const calculateWithdrawMetrics = (records, depositMetrics = null) => {
     totalWithdrawCount,
     totalWithdrawAmount,
     avgProcessingTime,
-    totalRecords: records.length,
+    totalRecords: uniqueOrderCount,
     // 提現成功時間區段
     withdrawSuccessTotalCount,
     withdrawSuccessTotalAmount,
