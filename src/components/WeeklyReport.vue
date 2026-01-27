@@ -1083,9 +1083,9 @@ setDefaultDate();
                 <td class="rate-cell">{{ (row.successRate * 100).toFixed(2) }}%</td>
                 <td class="rate-cell">{{ (row.within3MinRate * 100).toFixed(2) }}%</td>
                 <td class="time-cell">{{ formatTime(row.avgTime) }}</td>
-                <td class="withdraw-rate-cell">{{ row.withdrawSuccessRate === null ? '/' : (row.withdrawSuccessRate * 100).toFixed(2) + '%' }}</td>
-                <td class="withdraw-rate-cell">{{ row.withdrawWithin3MinRate === null ? '/' : (row.withdrawWithin3MinRate * 100).toFixed(2) + '%' }}</td>
-                <td class="withdraw-time-cell">{{ row.withdrawAvgTime === null ? '/' : formatTime(row.withdrawAvgTime) }}</td>
+                <td class="withdraw-rate-cell">{{ row.withdrawSuccessRate === null ? '--' : (row.withdrawSuccessRate * 100).toFixed(2) + '%' }}</td>
+                <td class="withdraw-rate-cell">{{ row.withdrawWithin3MinRate === null ? '--' : (row.withdrawWithin3MinRate * 100).toFixed(2) + '%' }}</td>
+                <td class="withdraw-time-cell">{{ row.withdrawAvgTime === null ? '--' : formatTime(row.withdrawAvgTime) }}</td>
               </tr>
             </tbody>
           </table>
