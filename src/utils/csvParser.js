@@ -1263,6 +1263,9 @@ export const parseWithdrawCSV = (content) => {
       transferStatus: matches[28] ? clean(matches[28]) : '' // AC 欄位 - 轉帳狀態 (轉帳完成/轉帳失敗)
     };
 
+    // 計算 isAutoWithdraw (AD欄位公式)：IF(AC="轉帳完成" AND P="通知完成", 1, 0)
+    record.isAutoWithdraw = (record.transferStatus === '轉帳完成' && record.merchantReceiveStatus === '通知完成') ? 1 : 0;
+
     // 從商戶名稱計算 remark (银行卡/支付宝/微信)
     const merchantName = record.merchant || '';
     if (merchantName.includes('支付宝') || merchantName.includes('支付寶')) {
@@ -1273,35 +1276,35 @@ export const parseWithdrawCSV = (content) => {
       record.remark = '银行卡';
     }
 
-    // 計算處理時間 (AE公式)：IF(V="", Q - T, Q - V)
-    // V = remainPoolCreateTime, Q = notifyMerchantTime, T = requestTime
+    // 計算處理時間 (AE公式)：IFERROR(Q - T, U - T)
+    // Q = notifyMerchantTime (通知商戶時間), T = requestTime (建立時間), U = poolCreateTime (POOL建单时间)
     record.avgTimeSeconds = null;
 
-    // 檢查 V 是否為空（包括空字串和無效日期）
-    const vIsEmpty = !record.remainPoolCreateTime ||
-                     record.remainPoolCreateTime === '' ||
-                     record.remainPoolCreateTime.startsWith('0000');
-
-    if (record.notifyMerchantTime && record.notifyMerchantTime !== '' && !record.notifyMerchantTime.startsWith('0000')) {
-      const notifyTime = new Date(record.notifyMerchantTime);
-      let startTime = null;
-
-      if (vIsEmpty) {
-        // V 為空，使用 Q - T
-        if (record.requestTime && record.requestTime !== '' && !record.requestTime.startsWith('0000')) {
-          startTime = new Date(record.requestTime);
-        }
-      } else {
-        // V 不為空，使用 Q - V
-        startTime = new Date(record.remainPoolCreateTime);
+    // 先嘗試 Q - T
+    if (record.notifyMerchantTime && record.notifyMerchantTime !== '' && !record.notifyMerchantTime.startsWith('0000') &&
+        record.requestTime && record.requestTime !== '' && !record.requestTime.startsWith('0000')) {
+      const qTime = new Date(record.notifyMerchantTime);
+      const tTime = new Date(record.requestTime);
+      if (!isNaN(qTime) && !isNaN(tTime)) {
+        record.avgTimeSeconds = (qTime - tTime) / 1000; // 轉換為秒
       }
+    }
 
-      if (startTime && !isNaN(notifyTime) && !isNaN(startTime)) {
-        record.avgTimeSeconds = (notifyTime - startTime) / 1000; // 轉換為秒
-        if (record.avgTimeSeconds < 0 || record.avgTimeSeconds > 86400) {
-          record.avgTimeSeconds = null;
+    // 如果 Q - T 失敗，使用 U - T
+    if (record.avgTimeSeconds === null) {
+      if (record.poolCreateTime && record.poolCreateTime !== '' && !record.poolCreateTime.startsWith('0000') &&
+          record.requestTime && record.requestTime !== '' && !record.requestTime.startsWith('0000')) {
+        const uTime = new Date(record.poolCreateTime);
+        const tTime = new Date(record.requestTime);
+        if (!isNaN(uTime) && !isNaN(tTime)) {
+          record.avgTimeSeconds = (uTime - tTime) / 1000; // 轉換為秒
         }
       }
+    }
+
+    // 過濾無效時間
+    if (record.avgTimeSeconds !== null && (record.avgTimeSeconds < 0 || record.avgTimeSeconds > 86400)) {
+      record.avgTimeSeconds = null;
     }
 
     // 過濾掉商戶名稱包含「线下」、「test」、「qa」的記錄

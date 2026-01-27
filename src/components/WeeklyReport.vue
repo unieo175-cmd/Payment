@@ -431,54 +431,97 @@ const analysisMetrics = computed(() => {
   // ===== 提現數據計算 =====
   const withdrawData = props.withdrawRecords;
 
-  // 計算提現類別指標
+  // 計算提現類別指標（按唯一流水號計算）
   const calculateWithdrawCategoryMetrics = (records) => {
-    if (records.length === 0) return { successCount: 0, successAmount: 0, avgTime: 0 };
+    if (records.length === 0) return { successRate: 0, within3MinRate: 0, avgTime: 0 };
 
-    // 提現成功：transferStatus = "轉帳完成" 且 payoutAmount > 0
-    const successRecords = records.filter(r =>
-      r.transferStatus === '轉帳完成' && r.payoutAmount > 0
+    // 按流水號分組
+    const withdrawalsById = {};
+    records.forEach(r => {
+      const id = r.id;
+      if (!withdrawalsById[id]) {
+        withdrawalsById[id] = { hasAutoWithdraw: false, hasFailedRecord: false };
+      }
+      if (r.isAutoWithdraw === 1) {
+        withdrawalsById[id].hasAutoWithdraw = true;
+      }
+      if (r.actualAmount === 0 && r.transferStatus !== '轉帳完成') {
+        withdrawalsById[id].hasFailedRecord = true;
+      }
+    });
+
+    // 計算唯一提現申請
+    const uniqueIds = Object.keys(withdrawalsById);
+    const autoWithdrawCount = uniqueIds.filter(id => withdrawalsById[id].hasAutoWithdraw).length;
+    const failedOnlyCount = uniqueIds.filter(id =>
+      !withdrawalsById[id].hasAutoWithdraw && withdrawalsById[id].hasFailedRecord
+    ).length;
+    const totalApplicationCount = autoWithdrawCount + failedOnlyCount;
+
+    // 成功率：有自動提現成功的申請數 / 總提現申請筆數
+    const successRate = totalApplicationCount > 0 ? autoWithdrawCount / totalApplicationCount : 0;
+
+    // 自動提現成功的記錄（用於計算2分內占比和平均時間）
+    const autoWithdrawRecords = records.filter(r => r.isAutoWithdraw === 1);
+
+    // 2分內占比：轉帳成功且處理時間在兩分內的筆數/自動提現筆數 * 100%
+    // AF = IF(AE <= "00:02:00", 1, 0)
+    const within3MinRecords = autoWithdrawRecords.filter(r =>
+      r.avgTimeSeconds !== null && r.avgTimeSeconds >= 0 && r.avgTimeSeconds <= 120
     );
-    const successCount = successRecords.length;
-    const successAmount = successRecords.reduce((sum, r) => sum + r.payoutAmount, 0);
+    const within3MinRate = autoWithdrawRecords.length > 0 ? within3MinRecords.length / autoWithdrawRecords.length : 0;
 
-    // 平均時間：transferStatus = "轉帳完成" 的記錄
-    const recordsWithTime = successRecords.filter(r =>
+    // 平均時間：轉帳成功的筆數的處理平均時間
+    const recordsWithTime = autoWithdrawRecords.filter(r =>
       r.avgTimeSeconds !== null && r.avgTimeSeconds >= 0
     );
     const avgTime = recordsWithTime.length > 0
       ? recordsWithTime.reduce((sum, r) => sum + r.avgTimeSeconds, 0) / recordsWithTime.length
       : 0;
 
-    return { successCount, successAmount, avgTime };
+    return { successRate, within3MinRate, avgTime };
   };
 
   // 整體提現
   const withdrawOverall = calculateWithdrawCategoryMetrics(withdrawData);
 
-  // 支付寶提現 (remark = "支付宝")
+  // 支付寶提現：商戶名稱包含「支付寶」或「支付宝」
   const withdrawAlipay = calculateWithdrawCategoryMetrics(
-    withdrawData.filter(r => r.remark === '支付宝')
+    withdrawData.filter(r => r.merchant && (r.merchant.includes('支付寶') || r.merchant.includes('支付宝')))
   );
 
-  // 微信提現 (remark = "微信")
+  // 微信提現：商戶名稱包含「微信」
   const withdrawWechat = calculateWithdrawCategoryMetrics(
-    withdrawData.filter(r => r.remark === '微信')
+    withdrawData.filter(r => r.merchant && r.merchant.includes('微信'))
   );
 
-  // 銀行卡提現 (remark = "银行卡")
-  const withdrawBankCard = calculateWithdrawCategoryMetrics(
-    withdrawData.filter(r => r.remark === '银行卡')
+  // 金寶提現：轉出帳號以 gb 開頭（不區分大小寫）
+  const withdrawGB = calculateWithdrawCategoryMetrics(
+    withdrawData.filter(r => r.payoutAccount && r.payoutAccount.toLowerCase().startsWith('gb'))
+  );
+
+  // 極速提現：轉出帳號包含 auction 或 *****ion
+  const withdrawAuction = calculateWithdrawCategoryMetrics(
+    withdrawData.filter(r => r.payoutAccount && (r.payoutAccount.toLowerCase().includes('auction') || r.payoutAccount.includes('*****ion')))
+  );
+
+  // 第三方提現：轉出帳號排除 gb 開頭和 auction/*****ion
+  const withdrawThirdParty = calculateWithdrawCategoryMetrics(
+    withdrawData.filter(r => {
+      if (!r.payoutAccount) return false;
+      const lower = r.payoutAccount.toLowerCase();
+      return !lower.startsWith('gb') && !lower.includes('auction') && !r.payoutAccount.includes('*****ion');
+    })
   );
 
   return [
-    { category: '整體', successRate: overallMetrics.successRate, within3MinRate: overallMetrics.within3MinRate, avgTime: overallMetrics.avgTime, withdrawSuccessCount: withdrawOverall.successCount, withdrawSuccessAmount: withdrawOverall.successAmount, withdrawAvgTime: withdrawOverall.avgTime },
-    { category: '支付寶', successRate: alipayMetrics.successRate, within3MinRate: alipayMetrics.within3MinRate, avgTime: alipayMetrics.avgTime, withdrawSuccessCount: withdrawAlipay.successCount, withdrawSuccessAmount: withdrawAlipay.successAmount, withdrawAvgTime: withdrawAlipay.avgTime },
-    { category: '微信', successRate: wechatMetrics.successRate, within3MinRate: wechatMetrics.within3MinRate, avgTime: wechatMetrics.avgTime, withdrawSuccessCount: withdrawWechat.successCount, withdrawSuccessAmount: withdrawWechat.successAmount, withdrawAvgTime: withdrawWechat.avgTime },
-    { category: '金寶', successRate: gbMetrics.successRate, within3MinRate: gbMetrics.within3MinRate, avgTime: gbMetrics.avgTime, withdrawSuccessCount: 0, withdrawSuccessAmount: 0, withdrawAvgTime: 0 },
-    { category: '極速', successRate: auctionMetrics.successRate, within3MinRate: auctionMetrics.within3MinRate, avgTime: auctionMetrics.avgTime, withdrawSuccessCount: withdrawBankCard.successCount, withdrawSuccessAmount: withdrawBankCard.successAmount, withdrawAvgTime: withdrawBankCard.avgTime },
-    { category: '第三方', successRate: thirdPartyMetrics.successRate, within3MinRate: thirdPartyMetrics.within3MinRate, avgTime: thirdPartyMetrics.avgTime, withdrawSuccessCount: 0, withdrawSuccessAmount: 0, withdrawAvgTime: 0 },
-    { category: '非正向信评', successRate: creditMetrics.successRate, within3MinRate: creditMetrics.within3MinRate, avgTime: creditMetrics.avgTime, withdrawSuccessCount: 0, withdrawSuccessAmount: 0, withdrawAvgTime: 0 }
+    { category: '整體', successRate: overallMetrics.successRate, within3MinRate: overallMetrics.within3MinRate, avgTime: overallMetrics.avgTime, withdrawSuccessRate: withdrawOverall.successRate, withdrawWithin3MinRate: withdrawOverall.within3MinRate, withdrawAvgTime: withdrawOverall.avgTime },
+    { category: '支付寶', successRate: alipayMetrics.successRate, within3MinRate: alipayMetrics.within3MinRate, avgTime: alipayMetrics.avgTime, withdrawSuccessRate: withdrawAlipay.successRate, withdrawWithin3MinRate: withdrawAlipay.within3MinRate, withdrawAvgTime: withdrawAlipay.avgTime },
+    { category: '微信', successRate: wechatMetrics.successRate, within3MinRate: wechatMetrics.within3MinRate, avgTime: wechatMetrics.avgTime, withdrawSuccessRate: withdrawWechat.successRate, withdrawWithin3MinRate: withdrawWechat.within3MinRate, withdrawAvgTime: withdrawWechat.avgTime },
+    { category: '金寶', successRate: gbMetrics.successRate, within3MinRate: gbMetrics.within3MinRate, avgTime: gbMetrics.avgTime, withdrawSuccessRate: withdrawGB.successRate, withdrawWithin3MinRate: withdrawGB.within3MinRate, withdrawAvgTime: withdrawGB.avgTime },
+    { category: '極速', successRate: auctionMetrics.successRate, within3MinRate: auctionMetrics.within3MinRate, avgTime: auctionMetrics.avgTime, withdrawSuccessRate: withdrawAuction.successRate, withdrawWithin3MinRate: withdrawAuction.within3MinRate, withdrawAvgTime: withdrawAuction.avgTime },
+    { category: '第三方', successRate: thirdPartyMetrics.successRate, within3MinRate: thirdPartyMetrics.within3MinRate, avgTime: thirdPartyMetrics.avgTime, withdrawSuccessRate: withdrawThirdParty.successRate, withdrawWithin3MinRate: withdrawThirdParty.within3MinRate, withdrawAvgTime: withdrawThirdParty.avgTime },
+    { category: '非正向信评', successRate: creditMetrics.successRate, within3MinRate: creditMetrics.within3MinRate, avgTime: creditMetrics.avgTime, withdrawSuccessRate: 0, withdrawWithin3MinRate: 0, withdrawAvgTime: 0 }
   ];
 });
 
@@ -1021,18 +1064,17 @@ setDefaultDate();
           <table class="analysis-table">
             <thead>
               <tr>
-                <th>分类</th>
+                <th rowspan="2" class="category-header">分类</th>
                 <th colspan="3" class="group-header deposit-header">充值数据</th>
                 <th colspan="3" class="group-header withdraw-header">提现数据</th>
               </tr>
               <tr>
-                <th></th>
-                <th>成功率</th>
-                <th>3分内占比</th>
-                <th>平均时间</th>
-                <th>成功笔数</th>
-                <th>成功金额</th>
-                <th>平均时间</th>
+                <th class="sub-header deposit-sub">成功率</th>
+                <th class="sub-header deposit-sub">3分内占比</th>
+                <th class="sub-header deposit-sub">平均时间</th>
+                <th class="sub-header withdraw-sub">成功率</th>
+                <th class="sub-header withdraw-sub">2分内占比</th>
+                <th class="sub-header withdraw-sub">平均时间</th>
               </tr>
             </thead>
             <tbody>
@@ -1041,8 +1083,8 @@ setDefaultDate();
                 <td class="rate-cell">{{ (row.successRate * 100).toFixed(2) }}%</td>
                 <td class="rate-cell">{{ (row.within3MinRate * 100).toFixed(2) }}%</td>
                 <td class="time-cell">{{ formatTime(row.avgTime) }}</td>
-                <td class="withdraw-cell">{{ row.withdrawSuccessCount.toLocaleString() }}</td>
-                <td class="withdraw-cell">{{ formatAmount(row.withdrawSuccessAmount) }}</td>
+                <td class="withdraw-rate-cell">{{ (row.withdrawSuccessRate * 100).toFixed(2) }}%</td>
+                <td class="withdraw-rate-cell">{{ (row.withdrawWithin3MinRate * 100).toFixed(2) }}%</td>
                 <td class="withdraw-time-cell">{{ formatTime(row.withdrawAvgTime) }}</td>
               </tr>
             </tbody>
@@ -1331,7 +1373,7 @@ setDefaultDate();
   width: 100%;
   border-collapse: collapse;
   background: #fff;
-  border: 1px solid #e8e8e8;
+  border: 2px solid #ddd;
   border-radius: 8px;
   overflow: hidden;
 }
@@ -1342,10 +1384,11 @@ setDefaultDate();
 
 .analysis-table th {
   padding: 12px 16px;
-  text-align: left;
+  text-align: center;
   font-size: 13px;
   font-weight: 600;
   color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 .analysis-table th:first-child {
@@ -1364,19 +1407,23 @@ setDefaultDate();
   background: #fafafa;
 }
 
-.analysis-table tbody tr:not(:last-child) {
-  border-bottom: 1px solid #f0f0f0;
+.analysis-table tbody tr:nth-child(even) {
+  background: #fafafa;
 }
 
 .analysis-table td {
   padding: 12px 16px;
   font-size: 13px;
   color: #333;
+  border: 1px solid #e0e0e0;
+  text-align: center;
 }
 
 .analysis-table .category-cell {
   color: #333;
-  font-weight: 500;
+  font-weight: 600;
+  text-align: left;
+  background: #f8f9fa;
 }
 
 .analysis-table .rate-cell {
@@ -1391,25 +1438,51 @@ setDefaultDate();
 
 .analysis-table .group-header {
   text-align: center;
-  border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+  font-size: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.5);
 }
 
 .analysis-table .deposit-header {
   background: #5cb85c;
+  border-left: 2px solid #5cb85c;
 }
 
 .analysis-table .withdraw-header {
   background: #4a4a9e;
+  border-right: 2px solid #4a4a9e;
 }
 
-.analysis-table .withdraw-cell {
+.analysis-table .withdraw-rate-cell {
   color: #4a4a9e;
   font-family: monospace;
 }
 
 .analysis-table .withdraw-time-cell {
-  color: #ff9f0a;
+  color: #7c4dff;
   font-family: monospace;
+}
+
+.analysis-table .category-header {
+  background: #9e9e9e;
+  vertical-align: middle;
+  text-align: center;
+}
+
+.analysis-table .sub-header {
+  font-size: 12px;
+  font-weight: 600;
+  background: #f5f5f5;
+  color: #333;
+}
+
+.analysis-table .sub-header.deposit-sub {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.analysis-table .sub-header.withdraw-sub {
+  background: #e8eaf6;
+  color: #3949ab;
 }
 
 @media (max-width: 768px) {
