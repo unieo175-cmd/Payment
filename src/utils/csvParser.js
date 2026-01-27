@@ -1260,8 +1260,7 @@ export const parseWithdrawCSV = (content) => {
       payoutBank: matches[25] ? clean(matches[25]) : '',
       payoutAccount: matches[26] ? clean(matches[26]) : '',
       payoutAmount: matches[27] ? parseFloat(clean(matches[27]).replace(/,/g, '')) || 0 : 0,
-      remark: matches[28] ? clean(matches[28]) : '', // AC 欄位
-      transferStatus: matches[29] ? clean(matches[29]) : '' // AD 欄位 - 轉帳狀態 (轉帳完成/轉帳失敗)
+      transferStatus: matches[28] ? clean(matches[28]) : '' // AC 欄位 - 轉帳狀態 (轉帳完成/轉帳失敗)
     };
 
     // 從商戶名稱計算 remark (银行卡/支付宝/微信)
@@ -1699,8 +1698,8 @@ export const calculateWithdrawMetrics = (records, depositMetrics = null) => {
   // totalWithdrawCount = actualAmount > 0 的記錄數
   const withdrawSuccessRate = records.length > 0 ? (totalWithdrawCount / records.length) * 100 : 0;
 
-  // 提现失败笔数 = I列(actualAmount)=0 且 AD列(transferStatus)包含"轉帳失敗"
-  // 公式：=SUMPRODUCT((I:I=0)*ISNUMBER(SEARCH("轉帳失敗", AD:AD)))
+  // 提现失败笔数 = I列(actualAmount)=0 且 AC列(transferStatus)包含"轉帳失敗"
+  // 公式：=SUMPRODUCT((I:I=0)*ISNUMBER(SEARCH("轉帳失敗", AC:AC)))
   const withdrawFailedCount = records.filter(r => {
     return r.actualAmount === 0 && r.transferStatus &&
            (r.transferStatus.includes('轉帳失敗') || r.transferStatus.includes('转帐失败'));
