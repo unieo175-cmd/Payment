@@ -144,10 +144,85 @@ const maxBankAmount = computed(() => {
   if (bankDistribution.value.length === 0) return 1;
   return Math.max(...bankDistribution.value.map(b => b.amount));
 });
+
+// 狀態分佈：極速銀行卡/支付寶/微信 充值成功比例
+const statusDistribution = computed(() => {
+  const dist = {
+    bankCard: { count: 0, amount: 0 },
+    alipay: { count: 0, amount: 0 },
+    wechat: { count: 0, amount: 0 }
+  };
+
+  // 遍歷所有充值成功記錄 (receivedAmount > 0)
+  props.records.filter(r => r.receivedAmount > 0).forEach(r => {
+    const hasJiSu = r.merchant && r.merchant.includes('极速充提3');
+    const hasAlipay = r.merchant && (r.merchant.includes('支付宝') || r.merchant.includes('支付寶'));
+    const hasWechat = r.merchant && r.merchant.includes('微信');
+
+    if (hasAlipay) {
+      dist.alipay.count++;
+      dist.alipay.amount += r.receivedAmount;
+    } else if (hasWechat) {
+      dist.wechat.count++;
+      dist.wechat.amount += r.receivedAmount;
+    } else if (hasJiSu && !hasAlipay && !hasWechat) {
+      dist.bankCard.count++;
+      dist.bankCard.amount += r.receivedAmount;
+    }
+  });
+
+  const total = dist.bankCard.count + dist.alipay.count + dist.wechat.count || 1;
+
+  return [
+    { label: '極速銀行卡', value: dist.bankCard.count, amount: dist.bankCard.amount, percent: (dist.bankCard.count / total * 100).toFixed(1), color: '#0a84ff' },
+    { label: '極速支付寶', value: dist.alipay.count, amount: dist.alipay.amount, percent: (dist.alipay.count / total * 100).toFixed(1), color: '#30d158' },
+    { label: '極速微信', value: dist.wechat.count, amount: dist.wechat.amount, percent: (dist.wechat.count / total * 100).toFixed(1), color: '#ff9f0a' }
+  ].filter(d => d.value > 0);
+});
+
+// 狀態分佈總筆數
+const statusTotalCount = computed(() => {
+  return statusDistribution.value.reduce((sum, item) => sum + item.value, 0);
+});
 </script>
 
 <template>
   <div class="charts-container">
+    <!-- 狀態分佈：極速銀行卡/支付寶/微信 充值成功比例 -->
+    <div class="chart-card">
+      <h3>狀態分佈</h3>
+      <div class="donut-chart">
+        <svg viewBox="0 0 100 100" class="donut">
+          <circle
+            v-for="(item, index) in statusDistribution"
+            :key="item.label"
+            cx="50"
+            cy="50"
+            r="40"
+            fill="none"
+            :stroke="item.color"
+            stroke-width="12"
+            :stroke-dasharray="`${item.percent * 2.51} ${251 - item.percent * 2.51}`"
+            :stroke-dashoffset="statusDistribution.slice(0, index).reduce((acc, d) => acc - d.percent * 2.51, 62.75)"
+            class="donut-segment"
+          />
+        </svg>
+        <div class="donut-center">
+          <span class="donut-total">{{ statusTotalCount.toLocaleString() }}</span>
+          <span class="donut-label">充值成功</span>
+        </div>
+      </div>
+      <div class="legend">
+        <div v-for="item in statusDistribution" :key="item.label" class="legend-item">
+          <span class="legend-dot" :style="{ background: item.color }"></span>
+          <span class="legend-label">{{ item.label }}</span>
+          <span class="legend-value">
+            {{ item.value.toLocaleString() }} ({{ item.percent }}%)
+          </span>
+        </div>
+      </div>
+    </div>
+
     <!-- Channel Distribution (暫時隱藏) -->
     <div class="chart-card" v-if="false">
       <h3>充值渠道佔比</h3>
