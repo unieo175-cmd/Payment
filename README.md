@@ -1,5 +1,10 @@
-# Vue 3 + Vite
+# Projects
 
-This template should help get you started developing with Vue 3 in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+專案管理倉庫，包含三個階段的專案資料夾：
 
-Learn more about IDE Support for Vue in the [Vue Docs Scaling up Guide](https://vuejs.org/guide/scaling-up/tooling.html#ide-support).
+## 資料夾結構
+
+- **提案/** - 提案階段的專案
+  - Payment - 支付分析系統
+- **測試/** - 測試階段的專案
+- **正式/** - 正式上線的專案
