@@ -253,7 +253,7 @@ const timeCards = computed(() => [
                 <td>总充值成功（含掉单）</td>
                 <td>{{ (metrics.minuteAnalysisTotalCount || 0).toLocaleString() }}</td>
                 <td>{{ formatAmount(metrics.minuteAnalysisTotalAmount || 0) }} 元</td>
-                <td class="formula-cell">實際收到金額 > 0 的筆數/金額</td>
+                <td class="formula-cell">實際收到金額 > 0 的筆數 +170（一般宝+70、极速提宝+100）</td>
               </tr>
               <tr>
                 <td>2分鐘內</td>
@@ -351,6 +351,7 @@ const timeCards = computed(() => [
                 <span class="detail-value">0</span>
               </div>
             </div>
+            <div class="block-formula">商戶含"极速充提3" 且 不含支付寶/微信</div>
           </div>
 
           <!-- 2. 成功配对笔数/金额 -->
@@ -369,6 +370,7 @@ const timeCards = computed(() => [
                 <span class="detail-value">{{ (metrics.expressMatchCount || 0).toLocaleString() }} 笔 / {{ formatAmount(metrics.expressMatchAmount || 0) }} 元</span>
               </div>
             </div>
+            <div class="block-formula">銀行卡代碼不為空 的筆數/申請金額</div>
           </div>
 
           <!-- 3. 订单成功笔数/金额 -->
@@ -391,6 +393,7 @@ const timeCards = computed(() => [
                 <span class="detail-value">{{ (metrics.creditScoreSuccessCount || 0).toLocaleString() }} 笔 / {{ formatAmount(metrics.creditScoreSuccessAmount || 0) }} 元 / {{ formatTime(metrics.creditScoreAvgTime) }}</span>
               </div>
             </div>
+            <div class="block-formula">實際收到金額 > 0 的筆數/金額</div>
           </div>
 
           <!-- 4. 没信评降等配卡 -->
@@ -416,21 +419,9 @@ const timeCards = computed(() => [
                 <span class="detail-value">{{ (metrics.noCreditDowngradeByAmount?.['other'] || 0).toLocaleString() }} 笔</span>
               </div>
             </div>
+            <div class="block-formula">無信評降等配卡的筆數，按申請金額分組統計</div>
           </div>
 
-          <!-- 說明區塊 -->
-          <div class="jisu-block note-block">
-            <div class="block-header">
-              <span class="block-title">說明</span>
-            </div>
-            <div class="block-details note-content">
-              <div>充值申请笔数：商戶含"极速充提3"且非支付寶/微信</div>
-              <div>成功配对：有bankCardCode的記錄</div>
-              <div>订单成功：receivedAmount > 0</div>
-              <div v-if="metrics.normalCardAppCount === 0">一般卡：尚缺公式計算</div>
-              <div v-if="metrics.expressCardAppCount === 0">极速提：尚缺公式計算</div>
-            </div>
-          </div>
         </div>
       </div>
 
@@ -470,6 +461,7 @@ const timeCards = computed(() => [
             <span class="detail-label">卡验及人验</span>
             <span class="detail-value">0 笔</span>
           </div>
+          <div class="section-formula">銀行卡代碼含"c2c" 的訂單成功筆數/金額</div>
         </div>
       </div>
 
@@ -497,6 +489,7 @@ const timeCards = computed(() => [
             <span class="detail-label">UC聚合 (UC1020)</span>
             <span class="detail-value">{{ (metrics.thirdPartyUCCount || 0).toLocaleString() }} 笔 / {{ formatAmount(metrics.thirdPartyUCAmount || 0) }} 元</span>
           </div>
+          <div class="section-formula">銀行卡代碼為特定三方代收代碼 的訂單成功筆數/金額</div>
         </div>
       </div>
 
@@ -520,6 +513,7 @@ const timeCards = computed(() => [
             <span class="detail-label">没上传回单重复出款充值上分</span>
             <span class="detail-value">0 笔 / 0 元</span>
           </div>
+          <div class="section-formula">尚缺公式計算</div>
         </div>
       </div>
 
@@ -548,6 +542,7 @@ const timeCards = computed(() => [
             <span class="detail-label">充值成功笔数</span>
             <span class="detail-value">{{ (metrics.cnxSuccessCount || 0).toLocaleString() }} 笔 / {{ formatAmount(metrics.cnxSuccessAmount || 0) }} 元</span>
           </div>
+          <div class="section-formula">商戶含"CNX" 的充值申請/成功筆數金額</div>
         </div>
       </div>
     </template>
@@ -593,6 +588,7 @@ const timeCards = computed(() => [
                 <span class="detail-value">0</span>
               </div>
             </div>
+            <div class="block-formula">商戶含"支付宝"或"支付寶"</div>
           </div>
 
           <!-- 2. 成功配对笔数/金额 -->
@@ -619,6 +615,7 @@ const timeCards = computed(() => [
                 <span class="detail-value">{{ (metrics.alipayJisuTibaoCount || 0).toLocaleString() }} 笔 / {{ formatAmount(metrics.alipayJisuTibaoMatchAmount || 0) }} 元</span>
               </div>
             </div>
+            <div class="block-formula">銀行卡代碼不為空 的筆數/申請金額</div>
           </div>
 
           <!-- 3. 订单成功笔数/金额 -->
@@ -653,6 +650,7 @@ const timeCards = computed(() => [
                 <span class="detail-value">{{ (metrics.alipayCreditNoTuwenCount || 0).toLocaleString() }} 笔 / {{ formatTime(metrics.alipayCreditNoTuwenAvgTime) }}</span>
               </div>
             </div>
+            <div class="block-formula">實際收到金額 > 0 的筆數/金額</div>
           </div>
 
           <!-- 4. 没信评降等配卡 -->
@@ -678,20 +676,7 @@ const timeCards = computed(() => [
                 <span class="detail-value">{{ (metrics.alipayNoCreditDowngradeByAmount?.['other'] || 0).toLocaleString() }} 笔</span>
               </div>
             </div>
-          </div>
-
-          <!-- 說明區塊 -->
-          <div class="jisu-block note-block">
-            <div class="block-header">
-              <span class="block-title">說明</span>
-            </div>
-            <div class="block-details note-content">
-              <div>一般寶 有 +70</div>
-              <div>极速提宝 有 +100</div>
-              <div v-if="metrics.alipayNormalCardAppCount === 0">一般卡：尚缺公式計算</div>
-              <div v-if="metrics.alipayJisuTikaCount === 0">极速提(卡)：尚缺公式計算</div>
-              <div v-if="metrics.alipayJisuTibaoCount === 0">极速提(宝)：尚缺公式計算</div>
-            </div>
+            <div class="block-formula">無信評降等配卡的筆數，按申請金額分組統計</div>
           </div>
         </div>
       </div>
@@ -732,6 +717,7 @@ const timeCards = computed(() => [
             <span class="detail-label">卡验及人验</span>
             <span class="detail-value">0 笔</span>
           </div>
+          <div class="section-formula">銀行卡代碼含"c2c" 的訂單成功筆數/金額</div>
         </div>
       </div>
 
@@ -759,6 +745,7 @@ const timeCards = computed(() => [
             <span class="detail-label">UC聚合 (UC1020)</span>
             <span class="detail-value">{{ (metrics.alipayThirdPartyUCCount || 0).toLocaleString() }} 笔 / {{ formatAmount(metrics.alipayThirdPartyUCAmount || 0) }} 元</span>
           </div>
+          <div class="section-formula">銀行卡代碼為特定三方代收代碼 的訂單成功筆數/金額</div>
         </div>
       </div>
 
@@ -782,14 +769,7 @@ const timeCards = computed(() => [
             <span class="detail-label">没上传回单重复出款充值上分</span>
             <span class="detail-value">0 笔 / 0 元</span>
           </div>
-        </div>
-        <div class="section-note">
-          <div class="note-title">說明：</div>
-          <div class="note-content">
-            <div>人工：尚缺公式計算</div>
-            <div>信评：尚缺公式計算</div>
-            <div>没上传回单重复出款充值上分：尚缺公式計算</div>
-          </div>
+          <div class="section-formula">尚缺公式計算</div>
         </div>
       </div>
 
@@ -827,15 +807,7 @@ const timeCards = computed(() => [
             <span class="detail-label">整体-提现成功/提现申请</span>
             <span class="detail-value highlight">0%</span>
           </div>
-        </div>
-        <div class="section-note">
-          <div class="note-title">說明：</div>
-          <div class="note-content">
-            <div>宝转卡渠道申请/成功：尚缺公式計算</div>
-            <div>宝转宝渠道申请/成功：尚缺公式計算</div>
-            <div>整体 配对成功/提现申请：尚缺公式計算</div>
-            <div>整体-提现成功/提现申请：尚缺公式計算</div>
-          </div>
+          <div class="section-formula">尚缺公式計算</div>
         </div>
       </div>
     </template>
@@ -873,6 +845,7 @@ const timeCards = computed(() => [
                 <span class="detail-value">0</span>
               </div>
             </div>
+            <div class="block-formula">商戶含"微信"</div>
           </div>
 
           <!-- 2. 成功配对笔数/金额 -->
@@ -891,6 +864,7 @@ const timeCards = computed(() => [
                 <span class="detail-value">{{ (metrics.wechatExpressMatchCount || 0).toLocaleString() }} 笔 / {{ formatAmount(metrics.wechatExpressMatchAmount || 0) }} 元</span>
               </div>
             </div>
+            <div class="block-formula">銀行卡代碼不為空 的筆數/申請金額</div>
           </div>
 
           <!-- 3. 订单成功笔数/金额 -->
@@ -917,6 +891,7 @@ const timeCards = computed(() => [
                 <span class="detail-value">0 笔 / 00:00:00</span>
               </div>
             </div>
+            <div class="block-formula">實際收到金額 > 0 的筆數/金額</div>
           </div>
 
           <!-- 4. 没信评降等配卡 -->
@@ -942,20 +917,7 @@ const timeCards = computed(() => [
                 <span class="detail-value">{{ (metrics.wechatNoCreditDowngradeByAmount?.['other'] || 0).toLocaleString() }} 笔</span>
               </div>
             </div>
-          </div>
-
-          <!-- 說明區塊 -->
-          <div class="jisu-block note-block">
-            <div class="block-header">
-              <span class="block-title">說明</span>
-            </div>
-            <div class="block-details note-content">
-              <div>充值申请笔数：商戶含"微信"</div>
-              <div>成功配对：有bankCardCode的記錄</div>
-              <div>订单成功：receivedAmount > 0</div>
-              <div v-if="metrics.wechatNormalCardAppCount === 0">一般卡：尚缺公式計算</div>
-              <div v-if="metrics.wechatExpressCardAppCount === 0">极速：尚缺公式計算</div>
-            </div>
+            <div class="block-formula">無信評降等配卡的筆數，按申請金額分組統計</div>
           </div>
         </div>
       </div>
@@ -996,6 +958,7 @@ const timeCards = computed(() => [
             <span class="detail-label">卡验及人验</span>
             <span class="detail-value">0 笔</span>
           </div>
+          <div class="section-formula">銀行卡代碼含"c2c" 的訂單成功筆數/金額</div>
         </div>
       </div>
 
@@ -1023,6 +986,7 @@ const timeCards = computed(() => [
             <span class="detail-label">UC聚合 (UC1020)</span>
             <span class="detail-value">0 笔 / 0 元</span>
           </div>
+          <div class="section-formula">銀行卡代碼為特定三方代收代碼 的訂單成功筆數/金額</div>
         </div>
       </div>
 
@@ -1046,6 +1010,7 @@ const timeCards = computed(() => [
             <span class="detail-label">没上传回单重复出款充值上分</span>
             <span class="detail-value">0 笔 / 0 元</span>
           </div>
+          <div class="section-formula">尚缺公式計算</div>
         </div>
       </div>
     </template>
@@ -1329,6 +1294,24 @@ const timeCards = computed(() => [
   color: #5cb85c;
   font-weight: 700;
   font-size: 15px;
+}
+
+.block-formula {
+  font-size: 11px;
+  color: #999;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed #e8e8e8;
+  font-family: monospace;
+}
+
+.section-formula {
+  font-size: 11px;
+  color: #999;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed #e8e8e8;
+  font-family: monospace;
 }
 
 /* 說明區塊樣式 */

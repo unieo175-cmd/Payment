@@ -244,9 +244,10 @@ export const calculateMetrics = (records) => {
   // ===== 充值成功時間區段 =====
   // 使用成功配對記錄（與重要訊息一致：銀行卡+支付寶+微信 成功配對）
   // 总充值成功（含掉单）= 成功配對 且 AP>0，加上硬編碼值 +170
+  // +170 說明：一般宝 +70、极速提宝 +100（這些記錄無法從原始數據計算）
   const minuteAnalysisRecords = allMatchedRecords.filter(r => r.receivedAmount > 0);
   const minuteAnalysisRawCount = minuteAnalysisRecords.length;
-  const minuteAnalysisTotalCount = minuteAnalysisRawCount + 170; // +70 一般宝 +100 极速提宝
+  const minuteAnalysisTotalCount = minuteAnalysisRawCount + 170;
   const minuteAnalysisTotalAmount = minuteAnalysisRecords.reduce((sum, r) => sum + r.receivedAmount, 0);
 
   // 有處理時間的成功記錄
