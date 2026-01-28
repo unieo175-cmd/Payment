@@ -243,7 +243,7 @@
 <body>
   <header>
     <h1>支付數據分析平台</h1>
-    <p>Product Requirements Document (PRD)</p>
+    <p>Product Requirements Document (PRD) v1.1.0</p>
   </header>
 
   <div class="container">
@@ -262,7 +262,8 @@
         <li><a href="#ui-ux">9. UI/UX 設計規範</a></li>
         <li><a href="#deployment">10. 部署資訊</a></li>
         <li><a href="#pending">11. 待完善功能</a></li>
-        <li><a href="#appendix">12. 附錄</a></li>
+        <li><a href="#version">12. 版本歷史</a></li>
+        <li><a href="#appendix">13. 附錄</a></li>
       </ul>
     </div>
 
@@ -283,12 +284,20 @@
         <li>業務管理人員</li>
       </ul>
 
-      <h3>1.4 技術棧</h3>
+      <h3>1.4 產品目標</h3>
+      <ul>
+        <li>提供即時的充值/提現數據分析</li>
+        <li>支持多渠道（銀行卡、支付寶、微信）數據分離查看</li>
+        <li>提供可視化圖表和報表導出功能</li>
+        <li>支持週報數據匯總</li>
+        <li>每個指標提供計算公式說明，方便理解數據來源</li>
+      </ul>
+
+      <h3>1.5 技術棧</h3>
       <table>
         <tr><th>類別</th><th>技術</th></tr>
         <tr><td>前端框架</td><td>Vue.js 3 (Composition API)</td></tr>
         <tr><td>構建工具</td><td>Vite 7</td></tr>
-        <tr><td>圖表庫</td><td>Chart.js + vue-chartjs</td></tr>
         <tr><td>數據處理</td><td>PapaParse</td></tr>
         <tr><td>報表導出</td><td>SheetJS (xlsx)</td></tr>
         <tr><td>部署</td><td>GitHub Pages</td></tr>
@@ -341,28 +350,79 @@
         <tr><td><span class="badge badge-green">极速(微信)</span></td><td>商戶含"微信"</td></tr>
       </table>
 
-      <h3>3.3 重要信息指標</h3>
+      <h3>3.3 全部渠道 - 重要信息指標</h3>
       <table>
         <tr><th>指標</th><th>計算公式</th></tr>
-        <tr><td>總申請筆數</td><td>銀行卡成功配對 + 支付寶成功配對 + 微信成功配對 + 170</td></tr>
-        <tr><td>總充值成功（含掉單）</td><td>所有成功配對且 receivedAmount > 0 的記錄數</td></tr>
-        <tr><td>總申請金額</td><td>充值成功筆數的金額加總</td></tr>
-        <tr><td>平均處理時間</td><td>充值成功筆數的 (通知時間 - 建立時間) 平均</td></tr>
-        <tr><td>無效申請</td><td>狀態包含"未充值"的記錄數</td></tr>
-        <tr><td>掉單筆數</td><td>充值成功 (AP > 0) 且狀態包含「補」的記錄數</td></tr>
+        <tr><td>總申請筆數</td><td>極速銀行卡+支付寶+微信 成功配對筆數</td></tr>
+        <tr><td>總充值成功（含掉單）</td><td>實際收到金額 > 0 的筆數</td></tr>
+        <tr><td>總申請金額</td><td>實際收到金額 > 0 的金額加總</td></tr>
+        <tr><td>平均處理時間</td><td>實際收到金額 > 0 的處理時間平均</td></tr>
+        <tr><td>無效申請</td><td>狀態含"取消" 或 實際收到金額=0</td></tr>
+        <tr><td>掉單筆數</td><td>實際收到金額>0 且 狀態含"補"</td></tr>
       </table>
 
-      <h3>3.4 處理時間分佈</h3>
+      <h3>3.4 全部渠道 - 處理時間分佈</h3>
       <table>
-        <tr><th>時間區段</th><th>條件</th></tr>
-        <tr><td>2分鐘內</td><td>processingTime &lt;= 120秒</td></tr>
-        <tr><td>3-5分鐘</td><td>120秒 &lt; processingTime &lt;= 300秒</td></tr>
-        <tr><td>5-15分鐘</td><td>300秒 &lt; processingTime &lt;= 900秒</td></tr>
-        <tr><td>15-30分鐘</td><td>900秒 &lt; processingTime &lt;= 1800秒</td></tr>
-        <tr><td>30分鐘以上</td><td>processingTime > 1800秒</td></tr>
+        <tr><th>時間區段</th><th>計算公式</th></tr>
+        <tr><td>2分鐘內</td><td>處理時間 &lt;= 120秒</td></tr>
+        <tr><td>3-5分鐘</td><td>處理時間 180~300秒</td></tr>
+        <tr><td>5-15分鐘</td><td>處理時間 300~900秒</td></tr>
+        <tr><td>15-30分鐘</td><td>處理時間 900~1800秒</td></tr>
+        <tr><td>30分鐘以上</td><td>處理時間 > 1800秒</td></tr>
       </table>
 
-      <h3>3.5 支付寶渠道特別說明</h3>
+      <h3>3.5 全部渠道 - 充值成功時間區段（表格）</h3>
+      <table>
+        <tr><th>欄位</th><th>說明</th><th>計算公式</th></tr>
+        <tr><td>總充值成功（含掉單）</td><td>統計總數</td><td>實際收到金額 > 0 的筆數 +170（一般宝+70、极速提宝+100）</td></tr>
+        <tr><td>2分鐘內</td><td>筆數/百分比/金額</td><td>處理時間 &lt;= 120秒</td></tr>
+        <tr><td>2-3分鐘</td><td>筆數/百分比/金額</td><td>處理時間 120~180秒</td></tr>
+        <tr><td>3-5分鐘</td><td>筆數/百分比/金額</td><td>處理時間 180~300秒</td></tr>
+        <tr><td>5-15分鐘</td><td>筆數/百分比/金額</td><td>處理時間 300~900秒</td></tr>
+        <tr><td>15-30分鐘</td><td>筆數/百分比/金額</td><td>處理時間 900~1800秒</td></tr>
+        <tr><td>30分鐘以上</td><td>筆數/百分比/金額</td><td>處理時間 > 1800秒</td></tr>
+        <tr><td>无效申请</td><td>筆數/百分比</td><td>狀態含"取消" 或 實際收到金額=0</td></tr>
+        <tr><td>掉单</td><td>筆數/百分比</td><td>實際收到金額>0 且 狀態含"補"</td></tr>
+        <tr><td>平均時間</td><td>時間</td><td>實際收到金額>0 的處理時間平均</td></tr>
+      </table>
+
+      <h3>3.6 银行卡渠道 - 极速（银行卡）</h3>
+      <table>
+        <tr><th>區塊</th><th>指標</th><th>計算公式</th></tr>
+        <tr><td>充值申請筆數</td><td>一般卡、极速提</td><td>商戶含"极速充提3" 且 不含支付寶/微信</td></tr>
+        <tr><td>成功配對</td><td>一般卡、极速提（筆數/金額）</td><td>銀行卡代碼不為空 的筆數/申請金額</td></tr>
+        <tr><td>訂單成功</td><td>一般卡、极速提、信評上分</td><td>實際收到金額 > 0 的筆數/金額</td></tr>
+        <tr><td>沒信評降等配卡</td><td>按金額區間展開（100-30000元）</td><td>無信評降等配卡的筆數，按申請金額分組統計</td></tr>
+      </table>
+
+      <h3>3.7 银行卡渠道 - 其他區塊</h3>
+      <table>
+        <tr><th>區塊</th><th>說明</th><th>計算公式</th></tr>
+        <tr><td>c2c</td><td>點確認、人工審核、超過11min補件後才成功</td><td>銀行卡代碼含"c2c" 的訂單成功筆數/金額</td></tr>
+        <tr><td>三方代收</td><td>GB-DahaomenJFB、汇通、豆豆、UC聚合</td><td>銀行卡代碼為特定三方代收代碼 的訂單成功筆數/金額</td></tr>
+        <tr><td>騙分沒到賬來找</td><td>人工、信評、沒上傳回單重複出款充值上分</td><td>尚缺公式計算</td></tr>
+        <tr><td>商業平台</td><td>CNX交易所充值申請/成功</td><td>商戶含"CNX" 的充值申請/成功筆數金額</td></tr>
+      </table>
+
+      <h3>3.8 支付宝渠道 - 极速（支付宝）</h3>
+      <table>
+        <tr><th>區塊</th><th>指標</th><th>計算公式</th></tr>
+        <tr><td>充值申請筆數</td><td>一般卡、一般寶、极速提(卡)、极速提(寶)</td><td>商戶含"支付宝"或"支付寶"</td></tr>
+        <tr><td>成功配對</td><td>一般卡、一般寶、极速提(卡)、极速提(寶)</td><td>銀行卡代碼不為空 的筆數/申請金額</td></tr>
+        <tr><td>訂單成功</td><td>一般卡、一般寶、极速提(卡)、极速提(寶)、信評上分</td><td>實際收到金額 > 0 的筆數/金額</td></tr>
+        <tr><td>沒信評降等配卡</td><td>按金額區間展開</td><td>無信評降等配卡的筆數，按申請金額分組統計</td></tr>
+      </table>
+
+      <h3>3.9 微信渠道 - 极速（微信）</h3>
+      <table>
+        <tr><th>區塊</th><th>指標</th><th>計算公式</th></tr>
+        <tr><td>充值申請筆數</td><td>一般卡、极速</td><td>商戶含"微信"</td></tr>
+        <tr><td>成功配對</td><td>一般卡、极速（筆數/金額）</td><td>銀行卡代碼不為空 的筆數/申請金額</td></tr>
+        <tr><td>訂單成功</td><td>一般卡、极速、信評上分</td><td>實際收到金額 > 0 的筆數/金額</td></tr>
+        <tr><td>沒信評降等配卡</td><td>按金額區間展開</td><td>無信評降等配卡的筆數，按申請金額分組統計</td></tr>
+      </table>
+
+      <h3>3.10 支付寶渠道特別說明</h3>
       <div class="note">
         <strong>說明：</strong><br>
         - 一般寶 有 +70<br>
@@ -386,11 +446,16 @@
       <h3>4.2 提現成功時間區段</h3>
       <table>
         <tr><th>項目</th><th>條件</th></tr>
+        <tr><td>總提現成功筆數</td><td>統計總數</td></tr>
         <tr><td>2分鐘內出款</td><td>avgTimeSeconds &lt; 120</td></tr>
         <tr><td>2-5分鐘出款</td><td>120 &lt;= avgTimeSeconds &lt; 300</td></tr>
         <tr><td>5-15分鐘出款</td><td>300 &lt;= avgTimeSeconds &lt; 900</td></tr>
         <tr><td>15-30分鐘出款</td><td>900 &lt;= avgTimeSeconds &lt; 1800</td></tr>
         <tr><td>超過30分鐘出款</td><td>avgTimeSeconds >= 1800</td></tr>
+        <tr><td>平均時間-卡(Q)</td><td>銀行卡渠道平均時間</td></tr>
+        <tr><td>平均時間-寶(R)</td><td>支付寶渠道平均時間</td></tr>
+        <tr><td>提現成功率</td><td>提現成功筆數 / 總記錄數</td></tr>
+        <tr><td>訂單成功</td><td>transferStatus = "轉帳完成" 的記錄</td></tr>
       </table>
 
       <h3>4.3 平均時間計算公式</h3>
@@ -415,7 +480,8 @@ T = requestTime（請求時間）
         <tr><th>區塊</th><th>說明</th></tr>
         <tr><td>充值匯總</td><td>按渠道統計充值數據</td></tr>
         <tr><td>提現匯總</td><td>按渠道統計提現數據</td></tr>
-        <tr><td>平均時間與騙分</td><td>提現平均時間（卡/寶）等指標</td></tr>
+        <tr><td>指標數據分析</td><td>各渠道指標匯總</td></tr>
+        <tr><td>下載分析範本</td><td>Excel 範本，可貼上原始數據計算指標</td></tr>
       </table>
     </div>
 
@@ -423,17 +489,18 @@ T = requestTime（請求時間）
     <div class="card" id="charts">
       <h2>6. 圖表可視化</h2>
 
-      <h3>6.1 狀態分佈（圓環圖）</h3>
+      <h3>6.1 銀行金額分佈（橫條圖）</h3>
       <ul>
-        <li><span class="badge badge-green">成功</span> 到帳金額 > 0 且非補單</li>
-        <li><span class="badge badge-orange">補單</span> 狀態含補單字眼 且 到帳金額 > 0</li>
+        <li>顯示 Top 10 銀行的充值金額分佈</li>
+        <li>橘色漸層長條圖（#FF9800 → #FFB74D）</li>
+        <li>滑鼠 hover 顯示完整銀行名稱和金額</li>
       </ul>
 
-      <h3>6.2 銀行金額分佈（橫條圖）</h3>
-      <p>顯示 Top 8 銀行的充值金額分佈</p>
-
-      <h3>6.3 24小時交易分佈（柱狀圖）</h3>
-      <p>按小時統計充值成功筆數和金額</p>
+      <h3>6.2 24小時交易分佈（柱狀圖）</h3>
+      <ul>
+        <li>按小時統計充值成功筆數和金額</li>
+        <li>滑鼠 hover 顯示筆數和金額詳情</li>
+      </ul>
     </div>
 
     <!-- 7. 數據處理規則 -->
@@ -449,7 +516,25 @@ T = requestTime（請求時間）
         <li>簡體字轉繁體字</li>
       </ul>
 
-      <h3>7.3 成功狀態關鍵字</h3>
+      <h3>7.3 成功配對條件</h3>
+      <table>
+        <tr><th>渠道</th><th>條件</th></tr>
+        <tr><td>銀行卡</td><td>商戶含"极速充提3" 且 不含支付寶/微信 且 bankCardCode 不為空</td></tr>
+        <tr><td>支付寶</td><td>商戶含"支付宝"或"支付寶" 且 bankCardCode 不為空</td></tr>
+        <tr><td>微信</td><td>商戶含"微信" 且 bankCardCode 不為空</td></tr>
+      </table>
+
+      <h3>7.4 三方代收識別</h3>
+      <table>
+        <tr><th>代碼</th><th>名稱</th></tr>
+        <tr><td>GB-DahaomenJFB</td><td>大豪門</td></tr>
+        <tr><td>HTc2cdeposit</td><td>汇通</td></tr>
+        <tr><td>DDFdeposit</td><td>豆豆</td></tr>
+        <tr><td>UC1020</td><td>UC聚合</td></tr>
+        <tr><td>非 gb/auction 開頭</td><td>其他三方</td></tr>
+      </table>
+
+      <h3>7.5 成功狀態關鍵字</h3>
       <ul>
         <li>已充值</li>
         <li>信用評分上分</li>
@@ -480,6 +565,13 @@ T = requestTime（請求時間）
         <tr><td>總覽</td><td>提現指標匯總</td></tr>
         <tr><td>時間區段分析</td><td>各時間區段筆數/金額</td></tr>
       </table>
+
+      <h3>8.3 指標數據分析範本</h3>
+      <ul>
+        <li>週報頁面可下載 Excel 範本</li>
+        <li>包含充值原始數據、提現原始數據、指標數據分析三個工作表</li>
+        <li>可貼上每日數據自動計算指標</li>
+      </ul>
     </div>
 
     <!-- 9. UI/UX 設計規範 -->
@@ -495,6 +587,7 @@ T = requestTime（請求時間）
         <tr><td>卡片背景</td><td><span class="color-box" style="background:#ffffff;border:1px solid #ddd"></span>#ffffff（白色）</td></tr>
         <tr><td>警告</td><td><span class="color-box" style="background:#ff9f0a"></span>#ff9f0a（橙色）</td></tr>
         <tr><td>錯誤</td><td><span class="color-box" style="background:#ff453a"></span>#ff453a（紅色）</td></tr>
+        <tr><td>銀行金額長條圖</td><td><span class="color-box" style="background:linear-gradient(90deg, #FF9800, #FFB74D)"></span>#FF9800 → #FFB74D（橘色漸層）</td></tr>
       </table>
 
       <h3>9.2 響應式設計</h3>
@@ -504,19 +597,42 @@ T = requestTime（請求時間）
         <tr><td>768px - 1200px</td><td>2-3列網格，側邊欄收縮</td></tr>
         <tr><td>&lt; 768px</td><td>單列網格，側邊欄僅顯示圖標</td></tr>
       </table>
+
+      <h3>9.3 交互設計</h3>
+      <ul>
+        <li>區塊可展開/收合</li>
+        <li>商戶下拉支持搜索</li>
+        <li>Hover 時顯示詳細 Tooltip</li>
+        <li>數據載入顯示進度條</li>
+        <li>每個指標下方顯示計算公式說明</li>
+      </ul>
     </div>
 
     <!-- 10. 部署資訊 -->
     <div class="card" id="deployment">
       <h2>10. 部署資訊</h2>
 
-      <h3>10.1 部署方式</h3>
+      <h3>10.1 專案結構</h3>
+      <div class="architecture">Projects/
+├── README.md
+├── 提案/
+│   └── Payment/        ← 支付數據分析平台
+│       ├── src/
+│       ├── public/
+│       ├── package.json
+│       └── ...
+├── 測試/
+│   └── README.md
+└── 正式/
+    └── README.md</div>
+
+      <h3>10.2 部署方式</h3>
       <p>GitHub Actions 自動部署到 GitHub Pages</p>
 
-      <h3>10.2 部署 URL</h3>
-      <p><a href="https://unieo175-cmd.github.io/Payment/" target="_blank">https://unieo175-cmd.github.io/Payment/</a></p>
+      <h3>10.3 部署 URL</h3>
+      <p><a href="https://unieo175-cmd.github.io/Projects/" target="_blank">https://unieo175-cmd.github.io/Projects/</a></p>
 
-      <h3>10.3 觸發條件</h3>
+      <h3>10.4 觸發條件</h3>
       <ul>
         <li>Push 到 main 分支</li>
         <li>手動觸發 (workflow_dispatch)</li>
@@ -552,29 +668,42 @@ T = requestTime（請求時間）
       </table>
     </div>
 
-    <!-- 12. 附錄 -->
-    <div class="card" id="appendix">
-      <h2>12. 附錄</h2>
+    <!-- 12. 版本歷史 -->
+    <div class="card" id="version">
+      <h2>12. 版本歷史</h2>
+      <table>
+        <tr><th>版本</th><th>日期</th><th>更新內容</th></tr>
+        <tr><td>1.0.0</td><td>2026-01-27</td><td>初始版本，包含充值/提現分析、週報功能</td></tr>
+        <tr><td>1.1.0</td><td>2026-01-28</td><td>新增計算公式說明、重組專案結構、更新部署配置</td></tr>
+      </table>
+    </div>
 
-      <h3>12.1 CSV 欄位對照表（充值）</h3>
+    <!-- 13. 附錄 -->
+    <div class="card" id="appendix">
+      <h2>13. 附錄</h2>
+
+      <h3>13.1 CSV 欄位對照表（充值）</h3>
       <table>
         <tr><th>欄位索引</th><th>欄位名稱</th><th>說明</th></tr>
         <tr><td>0</td><td>id</td><td>流水號</td></tr>
         <tr><td>2</td><td>merchant</td><td>商戶名稱</td></tr>
         <tr><td>3</td><td>amount</td><td>申請金額</td></tr>
-        <tr><td>6</td><td>bankCardCode</td><td>銀行卡號</td></tr>
+        <tr><td>6</td><td>bankCardCode</td><td>銀行卡代碼</td></tr>
         <tr><td>8</td><td>bankName</td><td>銀行名稱</td></tr>
-        <tr><td>12</td><td>receivedAmount</td><td>到帳金額 (AP欄)</td></tr>
+        <tr><td>12</td><td>receivedAmount</td><td>實際收到金額 (M欄)</td></tr>
         <tr><td>13</td><td>status</td><td>狀態 (N欄)</td></tr>
         <tr><td>16</td><td>requestTime</td><td>請求日期 (Q欄)</td></tr>
         <tr><td>19</td><td>notifyMerchantTime</td><td>通知商戶時間 (T欄)</td></tr>
-        <tr><td>37</td><td>receiptVerifyResultTime</td><td>回單驗證結果時間 (AL欄)</td></tr>
+        <tr><td>39</td><td>processingTime</td><td>處理時間 (AN欄)</td></tr>
       </table>
 
-      <h3>12.2 CSV 欄位對照表（提現）</h3>
+      <h3>13.2 CSV 欄位對照表（提現）</h3>
       <table>
         <tr><th>欄位索引</th><th>欄位名稱</th><th>說明</th></tr>
         <tr><td>8</td><td>actualAmount</td><td>實際金額 (I欄)</td></tr>
+        <tr><td>16</td><td>requestTime</td><td>請求時間 (Q欄)</td></tr>
+        <tr><td>16</td><td>notifyMerchantTime</td><td>通知商戶時間 (Q欄)</td></tr>
+        <tr><td>19</td><td>requestTime</td><td>建立時間 (T欄)</td></tr>
         <tr><td>21</td><td>remainPoolCreateTime</td><td>餘額池建立時間 (V欄)</td></tr>
         <tr><td>27</td><td>payoutAmount</td><td>轉出金額 (AB欄)</td></tr>
         <tr><td>28</td><td>transferStatus</td><td>轉帳狀態 (AC欄)</td></tr>
@@ -583,7 +712,7 @@ T = requestTime（請求時間）
   </div>
 
   <footer>
-    <p>支付數據分析平台 PRD v1.0.0 | 更新日期：2026-01-27</p>
+    <p>支付數據分析平台 PRD v1.1.0 | 更新日期：2026-01-28</p>
   </footer>
 </body>
 </html>
