@@ -1276,29 +1276,28 @@ export const parseWithdrawCSV = (content) => {
       record.remark = '银行卡';
     }
 
-    // 計算處理時間 (AE公式)：IFERROR(Q - T, U - T)
-    // Q = notifyMerchantTime (通知商戶時間), T = requestTime (建立時間), U = poolCreateTime (POOL建单时间)
+    // 計算處理時間 (AE公式)：IF(V="", Q-T, Q-V)
+    // Q = notifyMerchantTime (通知商戶時間), T = requestTime (建立時間), V = remainPoolCreateTime (剩餘池建立時間)
+    // 如果 V 為空：使用 Q - T
+    // 如果 V 不為空：使用 Q - V
     record.avgTimeSeconds = null;
 
-    // 先嘗試 Q - T
-    if (record.notifyMerchantTime && record.notifyMerchantTime !== '' && !record.notifyMerchantTime.startsWith('0000') &&
-        record.requestTime && record.requestTime !== '' && !record.requestTime.startsWith('0000')) {
-      const qTime = new Date(record.notifyMerchantTime);
-      const tTime = new Date(record.requestTime);
-      if (!isNaN(qTime) && !isNaN(tTime)) {
-        record.avgTimeSeconds = (qTime - tTime) / 1000; // 轉換為秒
-      }
-    }
+    const qTime = record.notifyMerchantTime && record.notifyMerchantTime !== '' && !record.notifyMerchantTime.startsWith('0000')
+      ? new Date(record.notifyMerchantTime) : null;
+    const tTime = record.requestTime && record.requestTime !== '' && !record.requestTime.startsWith('0000')
+      ? new Date(record.requestTime) : null;
+    const vTime = record.remainPoolCreateTime && record.remainPoolCreateTime !== '' && !record.remainPoolCreateTime.startsWith('0000')
+      ? new Date(record.remainPoolCreateTime) : null;
 
-    // 如果 Q - T 失敗，使用 U - T
-    if (record.avgTimeSeconds === null) {
-      if (record.poolCreateTime && record.poolCreateTime !== '' && !record.poolCreateTime.startsWith('0000') &&
-          record.requestTime && record.requestTime !== '' && !record.requestTime.startsWith('0000')) {
-        const uTime = new Date(record.poolCreateTime);
-        const tTime = new Date(record.requestTime);
-        if (!isNaN(uTime) && !isNaN(tTime)) {
-          record.avgTimeSeconds = (uTime - tTime) / 1000; // 轉換為秒
+    if (qTime && !isNaN(qTime)) {
+      if (!vTime || isNaN(vTime)) {
+        // V 為空，使用 Q - T
+        if (tTime && !isNaN(tTime)) {
+          record.avgTimeSeconds = (qTime - tTime) / 1000;
         }
+      } else {
+        // V 不為空，使用 Q - V
+        record.avgTimeSeconds = (qTime - vTime) / 1000;
       }
     }
 
