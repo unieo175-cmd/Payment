@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, watch } from 'vue';
-import { calculateMetrics, calculateWithdrawMetrics, formatTime, formatAmount, exportWeeklyToExcel } from '../utils/csvParser';
+import { calculateMetrics, calculateWithdrawMetrics, formatTime, formatAmount, exportWeeklyToExcel, exportMetricsAnalysisTemplate } from '../utils/csvParser';
 
 const props = defineProps({
   depositRecords: {
@@ -539,6 +539,11 @@ const handleExport = () => {
   }
 };
 
+// 匯出指標數據分析範本
+const handleExportTemplate = () => {
+  exportMetricsAnalysisTemplate();
+};
+
 // 初始化
 setDefaultDate();
 </script>
@@ -560,6 +565,7 @@ setDefaultDate();
           <input type="date" v-model="endDate" class="date-input" />
         </div>
         <button @click="handleExport" class="export-btn" v-if="weeklyMetrics">匯出 Excel</button>
+        <button @click="handleExportTemplate" class="export-btn template-btn">下載分析範本</button>
       </div>
     </div>
 
@@ -1166,6 +1172,15 @@ setDefaultDate();
 
 .export-btn:hover {
   background: #4cae4c;
+}
+
+.export-btn.template-btn {
+  background: #0a84ff;
+  margin-left: 10px;
+}
+
+.export-btn.template-btn:hover {
+  background: #0066cc;
 }
 
 /* 報表區塊 */

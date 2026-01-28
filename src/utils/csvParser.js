@@ -1887,3 +1887,130 @@ export const calculateWithdrawMetrics = (records, depositMetrics = null) => {
     wechatDepositSuccessCount: depositMetrics?.wechatTotalOrderSuccessCount || 0
   };
 };
+
+// 匯出指標數據分析 Excel 範本
+export const exportMetricsAnalysisTemplate = () => {
+  const wb = XLSX.utils.book_new();
+
+  // ===== 工作表1: 充值原始數據 =====
+  // 定義充值欄位標題 (與原始CSV一致)
+  const depositHeaders = [
+    'A-序號', 'B-商戶名稱', 'C-商戶訂單號', 'D-平台訂單號', 'E-收款人姓名', 'F-收款銀行',
+    'G-收款卡號', 'H-申請日期', 'I-申請金額', 'J-銀行卡流水號', 'K-銀行回單碼',
+    'L-收款金額', 'M-收款金額', 'N-凍結金額', 'O-商戶手續費', 'P-銀行到帳時間',
+    'Q-請求日期', 'R-銀行收款時間', 'S-銀商確認到帳時間', 'T-通知商戶時間',
+    'U-狀態', 'V-userId', 'W-userIP', 'X-配對時間', 'Y-配對銀行',
+    'Z-配對卡號', 'AA-配對卡姓名', 'AB-配對到帳金額', 'AC-配對ID', 'AD-配對商戶訂單號',
+    'AE-配對平台訂單號', 'AF-提現金額', 'AG-配對說明', 'AH-配對轉帳時間',
+    'AI-極速提帳號', 'AJ-卡剩餘池建立時間', 'AK-備註', 'AL-信用評分',
+    'AM-處理時間(秒)', 'AN-是否3分內', 'AO-是否自動到帳', 'AP-收款金額'
+  ];
+  const depositData = [depositHeaders];
+  // 添加說明行
+  depositData.push(['請在此行下方貼上充值原始數據（不含標題行）', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '']);
+
+  const ws1 = XLSX.utils.aoa_to_sheet(depositData);
+  // 設定欄寬
+  ws1['!cols'] = depositHeaders.map(() => ({ wch: 15 }));
+  XLSX.utils.book_append_sheet(wb, ws1, '充值原始數據');
+
+  // ===== 工作表2: 提現原始數據 =====
+  const withdrawHeaders = [
+    'A-序號', 'B-流水號', 'C-商戶名稱', 'D-商戶訂單號', 'E-平台訂單號',
+    'F-申請出款金額', 'G-商戶返點', 'H-實際轉出金額', 'I-實際轉出金額',
+    'J-收款銀行', 'K-收款卡號', 'L-收款人', 'M-收款地址',
+    'N-剩餘池ID', 'O-狀態', 'P-商戶收款狀態', 'Q-通知商戶時間',
+    'R-userId', 'S-userIP', 'T-建立時間', 'U-POOL建单时间',
+    'V-剩餘池建立時間', 'W-轉帳ID', 'X-轉出帳號', 'Y-轉出銀行',
+    'Z-轉出帳戶名', 'AA-手續費', 'AB-轉帳時間', 'AC-說明'
+  ];
+  const withdrawData = [withdrawHeaders];
+  withdrawData.push(['請在此行下方貼上提現原始數據（不含標題行）', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '']);
+
+  const ws2 = XLSX.utils.aoa_to_sheet(withdrawData);
+  ws2['!cols'] = withdrawHeaders.map(() => ({ wch: 15 }));
+  XLSX.utils.book_append_sheet(wb, ws2, '提現原始數據');
+
+  // ===== 工作表3: 過濾後充值數據 =====
+  const filteredDepositHeaders = ['序號', '商戶名稱', '收款金額(M)', '處理時間(AM)', '是否3分內(AN)', '是否自動到帳(AO)', '狀態(U)'];
+  const filteredDepositFormulas = [
+    filteredDepositHeaders,
+    ['（此表自動過濾 test/qa/線下 商戶）', '', '', '', '', '', ''],
+    // 使用 FILTER 函數過濾數據
+    ['=IFERROR(FILTER(\'充值原始數據\'!A:A, (ISERROR(SEARCH("test",LOWER(\'充值原始數據\'!B:B))))*(ISERROR(SEARCH("qa",LOWER(\'充值原始數據\'!B:B))))*(ISERROR(SEARCH("线下",\'充值原始數據\'!B:B)))*(ISERROR(SEARCH("線下",\'充值原始數據\'!B:B)))*(\'充值原始數據\'!A:A<>"")*(\'充值原始數據\'!A:A<>"A-序號")), "")',
+     '=IFERROR(FILTER(\'充值原始數據\'!B:B, (ISERROR(SEARCH("test",LOWER(\'充值原始數據\'!B:B))))*(ISERROR(SEARCH("qa",LOWER(\'充值原始數據\'!B:B))))*(ISERROR(SEARCH("线下",\'充值原始數據\'!B:B)))*(ISERROR(SEARCH("線下",\'充值原始數據\'!B:B)))*(\'充值原始數據\'!A:A<>"")*(\'充值原始數據\'!A:A<>"A-序號")), "")',
+     '=IFERROR(FILTER(\'充值原始數據\'!M:M, (ISERROR(SEARCH("test",LOWER(\'充值原始數據\'!B:B))))*(ISERROR(SEARCH("qa",LOWER(\'充值原始數據\'!B:B))))*(ISERROR(SEARCH("线下",\'充值原始數據\'!B:B)))*(ISERROR(SEARCH("線下",\'充值原始數據\'!B:B)))*(\'充值原始數據\'!A:A<>"")*(\'充值原始數據\'!A:A<>"A-序號")), "")',
+     '=IFERROR(FILTER(\'充值原始數據\'!AM:AM, (ISERROR(SEARCH("test",LOWER(\'充值原始數據\'!B:B))))*(ISERROR(SEARCH("qa",LOWER(\'充值原始數據\'!B:B))))*(ISERROR(SEARCH("线下",\'充值原始數據\'!B:B)))*(ISERROR(SEARCH("線下",\'充值原始數據\'!B:B)))*(\'充值原始數據\'!A:A<>"")*(\'充值原始數據\'!A:A<>"A-序號")), "")',
+     '=IFERROR(FILTER(\'充值原始數據\'!AN:AN, (ISERROR(SEARCH("test",LOWER(\'充值原始數據\'!B:B))))*(ISERROR(SEARCH("qa",LOWER(\'充值原始數據\'!B:B))))*(ISERROR(SEARCH("线下",\'充值原始數據\'!B:B)))*(ISERROR(SEARCH("線下",\'充值原始數據\'!B:B)))*(\'充值原始數據\'!A:A<>"")*(\'充值原始數據\'!A:A<>"A-序號")), "")',
+     '=IFERROR(FILTER(\'充值原始數據\'!AO:AO, (ISERROR(SEARCH("test",LOWER(\'充值原始數據\'!B:B))))*(ISERROR(SEARCH("qa",LOWER(\'充值原始數據\'!B:B))))*(ISERROR(SEARCH("线下",\'充值原始數據\'!B:B)))*(ISERROR(SEARCH("線下",\'充值原始數據\'!B:B)))*(\'充值原始數據\'!A:A<>"")*(\'充值原始數據\'!A:A<>"A-序號")), "")',
+     '=IFERROR(FILTER(\'充值原始數據\'!U:U, (ISERROR(SEARCH("test",LOWER(\'充值原始數據\'!B:B))))*(ISERROR(SEARCH("qa",LOWER(\'充值原始數據\'!B:B))))*(ISERROR(SEARCH("线下",\'充值原始數據\'!B:B)))*(ISERROR(SEARCH("線下",\'充值原始數據\'!B:B)))*(\'充值原始數據\'!A:A<>"")*(\'充值原始數據\'!A:A<>"A-序號")), "")']
+  ];
+  const ws3 = XLSX.utils.aoa_to_sheet(filteredDepositFormulas);
+  ws3['!cols'] = filteredDepositHeaders.map(() => ({ wch: 18 }));
+  XLSX.utils.book_append_sheet(wb, ws3, '過濾後充值');
+
+  // ===== 工作表4: 指標數據分析 =====
+  const analysisData = [
+    ['指標數據分析', '', '', '', '', '', ''],
+    ['', '', '', '', '', '', ''],
+    ['分類', '充值成功率', '充值3分內占比', '充值平均時間', '提現成功率', '提現2分內占比', '提現平均時間'],
+    ['', '', '', '', '', '', ''],
+    ['【充值公式說明】', '', '', '', '', '', ''],
+    ['成功率 = 1 - 補單筆數/總充值筆數', '', '', '', '', '', ''],
+    ['3分內占比 = 3分內筆數/自動到帳筆數', '', '', '', '', '', ''],
+    ['平均時間 = AVERAGEIFS(處理時間, 收款金額, ">0")', '', '', '', '', '', ''],
+    ['', '', '', '', '', '', ''],
+    ['【提現公式說明】', '', '', '', '', '', ''],
+    ['成功率 = 自動提現筆數/總提現申請筆數', '', '', '', '', '', ''],
+    ['2分內占比 = 2分內筆數/自動提現筆數', '', '', '', '', '', ''],
+    ['平均時間 = IF(V為空, Q-T, Q-V) 的平均值', '', '', '', '', '', ''],
+    ['', '', '', '', '', '', ''],
+    ['【分類篩選條件】', '', '', '', '', '', ''],
+    ['整體: 所有記錄（排除test/qa/線下）', '', '', '', '', '', ''],
+    ['支付寶: 商戶名稱包含「支付寶」或「支付宝」', '', '', '', '', '', ''],
+    ['微信: 商戶名稱包含「微信」', '', '', '', '', '', ''],
+    ['金寶: 轉出帳號以 GB 開頭（不區分大小寫）', '', '', '', '', '', ''],
+    ['極速: 轉出帳號包含 auction 或 *****ion', '', '', '', '', '', ''],
+    ['第三方: 排除以上所有分類', '', '', '', '', '', ''],
+    ['非正向信评: 信用評分欄位包含「非正向」', '', '', '', '', '', ''],
+    ['', '', '', '', '', '', ''],
+    ['【注意事項】', '', '', '', '', '', ''],
+    ['1. 貼上數據前請確保刪除原始數據中的標題行', '', '', '', '', '', ''],
+    ['2. 數據需要從系統匯出的原始CSV複製', '', '', '', '', '', ''],
+    ['3. 本範本會自動過濾 test/qa/線下 商戶', '', '', '', '', '', '']
+  ];
+
+  const ws4 = XLSX.utils.aoa_to_sheet(analysisData);
+  ws4['!cols'] = [{ wch: 25 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }];
+  XLSX.utils.book_append_sheet(wb, ws4, '指標數據分析說明');
+
+  // ===== 工作表5: 計算結果 =====
+  const calcData = [
+    ['指標數據分析 - 計算結果', '', '', '', '', '', ''],
+    ['', '', '', '', '', '', ''],
+    ['分類', '充值成功率', '充值3分內占比', '充值平均時間(秒)', '提現成功率', '提現2分內占比', '提現平均時間(秒)'],
+    ['整體',
+     '=IFERROR(1-COUNTIFS(\'過濾後充值\'!G:G,"*補*",\'過濾後充值\'!C:C,">0")/COUNTIF(\'過濾後充值\'!C:C,">0"), 0)',
+     '=IFERROR(COUNTIFS(\'過濾後充值\'!E:E,1,\'過濾後充值\'!C:C,">0")/COUNTIFS(\'過濾後充值\'!F:F,1,\'過濾後充值\'!C:C,">0"), 0)',
+     '=IFERROR(AVERAGEIFS(\'過濾後充值\'!D:D,\'過濾後充值\'!C:C,">0",\'過濾後充值\'!D:D,">0"), 0)',
+     '請貼上提現數據後手動計算',
+     '請貼上提現數據後手動計算',
+     '請貼上提現數據後手動計算'
+    ],
+    ['支付寶', '=IFERROR(1-COUNTIFS(\'過濾後充值\'!G:G,"*補*",\'過濾後充值\'!C:C,">0",\'過濾後充值\'!B:B,"*支付*")/COUNTIFS(\'過濾後充值\'!C:C,">0",\'過濾後充值\'!B:B,"*支付*"), 0)', '', '', '', '', ''],
+    ['微信', '=IFERROR(1-COUNTIFS(\'過濾後充值\'!G:G,"*補*",\'過濾後充值\'!C:C,">0",\'過濾後充值\'!B:B,"*微信*")/COUNTIFS(\'過濾後充值\'!C:C,">0",\'過濾後充值\'!B:B,"*微信*"), 0)', '', '', '', '', ''],
+    ['金寶', '--', '--', '--', '', '', ''],
+    ['極速', '--', '--', '--', '', '', ''],
+    ['第三方', '--', '--', '--', '', '', ''],
+    ['非正向信评', '', '', '', '--', '--', '--']
+  ];
+
+  const ws5 = XLSX.utils.aoa_to_sheet(calcData);
+  ws5['!cols'] = [{ wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 18 }, { wch: 15 }, { wch: 15 }, { wch: 18 }];
+  XLSX.utils.book_append_sheet(wb, ws5, '計算結果');
+
+  // 下載檔案
+  const now = new Date();
+  const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
+  XLSX.writeFile(wb, `指標數據分析範本_${dateStr}.xlsx`);
+};
