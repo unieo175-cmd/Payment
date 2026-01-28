@@ -35,37 +35,44 @@ const successRecords = computed(() => matchedRecords.value.filter(r => r.receive
 // 充值成功總筆數
 const successTotalCount = computed(() => successRecords.value.length);
 
-// Calculate status distribution
-// 公式：
-// - 成功：到帳金額>0 且非補單
-// - 補單：狀態含補單字眼 且 到帳金額>0
-const statusDistribution = computed(() => {
+// Calculate channel distribution (充值渠道佔比)
+// 極速銀行卡/支付寶/微信/三方 的充值成功佔比
+const channelDistribution = computed(() => {
   const dist = {
-    success: 0,
-    successAmount: 0,
-    budan: 0,
-    budanAmount: 0
+    bankCard: { count: 0, amount: 0 },
+    alipay: { count: 0, amount: 0 },
+    wechat: { count: 0, amount: 0 },
+    thirdParty: { count: 0, amount: 0 }
   };
 
-  successRecords.value.forEach(r => {
-    const hasBuDan = r.status && (r.status.includes('補') || r.status.includes('补'));
+  // 遍歷所有充值成功記錄 (receivedAmount > 0)
+  props.records.filter(r => r.receivedAmount > 0).forEach(r => {
+    const hasJiSu = r.merchant && r.merchant.includes('极速充提3');
+    const hasAlipay = r.merchant && (r.merchant.includes('支付宝') || r.merchant.includes('支付寶'));
+    const hasWechat = r.merchant && r.merchant.includes('微信');
 
-    if (hasBuDan) {
-      // 補單：狀態含補單字眼 且 到帳金額>0
-      dist.budan++;
-      dist.budanAmount += r.receivedAmount;
+    if (hasAlipay) {
+      dist.alipay.count++;
+      dist.alipay.amount += r.receivedAmount;
+    } else if (hasWechat) {
+      dist.wechat.count++;
+      dist.wechat.amount += r.receivedAmount;
+    } else if (hasJiSu) {
+      dist.bankCard.count++;
+      dist.bankCard.amount += r.receivedAmount;
     } else {
-      // 成功：到帳金額>0 且非補單
-      dist.success++;
-      dist.successAmount += r.receivedAmount;
+      dist.thirdParty.count++;
+      dist.thirdParty.amount += r.receivedAmount;
     }
   });
 
-  const total = successTotalCount.value || 1;
+  const total = dist.bankCard.count + dist.alipay.count + dist.wechat.count + dist.thirdParty.count || 1;
 
   return [
-    { label: '成功', value: dist.success, amount: dist.successAmount, percent: (dist.success / total * 100).toFixed(1), color: '#30d158' },
-    { label: '補單', value: dist.budan, amount: dist.budanAmount, percent: (dist.budan / total * 100).toFixed(1), color: '#ff9f0a' }
+    { label: '極速銀行卡', value: dist.bankCard.count, amount: dist.bankCard.amount, percent: (dist.bankCard.count / total * 100).toFixed(1), color: '#0a84ff' },
+    { label: '支付寶', value: dist.alipay.count, amount: dist.alipay.amount, percent: (dist.alipay.count / total * 100).toFixed(1), color: '#30d158' },
+    { label: '微信', value: dist.wechat.count, amount: dist.wechat.amount, percent: (dist.wechat.count / total * 100).toFixed(1), color: '#34c759' },
+    { label: '三方', value: dist.thirdParty.count, amount: dist.thirdParty.amount, percent: (dist.thirdParty.count / total * 100).toFixed(1), color: '#ff9f0a' }
   ].filter(d => d.value > 0);
 });
 
@@ -82,7 +89,7 @@ const bankDistribution = computed(() => {
 
   return Array.from(bankMap.entries())
     .sort((a, b) => b[1] - a[1])
-    .slice(0, 8)
+    .slice(0, 10)
     .map(([name, amount]) => ({ name, amount }));
 });
 
@@ -118,13 +125,13 @@ const maxBankAmount = computed(() => {
 
 <template>
   <div class="charts-container">
-    <!-- Status Distribution -->
+    <!-- Channel Distribution -->
     <div class="chart-card">
-      <h3>狀態分佈</h3>
+      <h3>充值渠道佔比</h3>
       <div class="donut-chart">
         <svg viewBox="0 0 100 100" class="donut">
           <circle
-            v-for="(item, index) in statusDistribution"
+            v-for="(item, index) in channelDistribution"
             :key="item.label"
             cx="50"
             cy="50"
@@ -133,7 +140,7 @@ const maxBankAmount = computed(() => {
             :stroke="item.color"
             stroke-width="12"
             :stroke-dasharray="`${item.percent * 2.51} ${251 - item.percent * 2.51}`"
-            :stroke-dashoffset="statusDistribution.slice(0, index).reduce((acc, d) => acc - d.percent * 2.51, 62.75)"
+            :stroke-dashoffset="channelDistribution.slice(0, index).reduce((acc, d) => acc - d.percent * 2.51, 62.75)"
             class="donut-segment"
           />
         </svg>
@@ -143,7 +150,7 @@ const maxBankAmount = computed(() => {
         </div>
       </div>
       <div class="legend">
-        <div v-for="item in statusDistribution" :key="item.label" class="legend-item">
+        <div v-for="item in channelDistribution" :key="item.label" class="legend-item">
           <span class="legend-dot" :style="{ background: item.color }"></span>
           <span class="legend-label">{{ item.label }}</span>
           <span class="legend-value">
@@ -156,7 +163,7 @@ const maxBankAmount = computed(() => {
 
     <!-- Bank Distribution -->
     <div class="chart-card">
-      <h3>銀行金額分佈 (Top 8)</h3>
+      <h3>銀行金額分佈 (Top 10)</h3>
       <div class="bar-chart">
         <div v-for="bank in bankDistribution" :key="bank.name" class="bar-row">
           <span class="bar-label">
